@@ -1,0 +1,1217 @@
+<!doctype html>
+<html lang="ru"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover"><style>[hidden]{display:none!important}img{max-width:100%}</style></head><body>
+<title>TrustLens</title>
+<meta name="description" content="TrustLens проверяет ответы ИИ: разбирает текст на утверждения, находит признаки ошибок и выдумки и объясняет, чему можно доверять.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Golos+Text:wght@400;500;600;700&family=JetBrains+Mono:wght@500;700&family=Unbounded:wght@500;700&display=swap">
+<style>
+:root{
+  --bg:#EEF1F5; --surface:#FFFFFF; --surface-2:#F6F8FB; --ink:#101826; --muted:#586477; --line:#D6DCE5;
+  --accent:#2448D8; --accent-ink:#FFFFFF; --accent-soft:#E3E9FF;
+  --ok:#17854A; --bad:#C8352A; --risk:#D06A0C; --check:#A07C00; --opinion:#7349C8; --neutral:#7D8899;
+  --shadow:0 1px 2px rgba(16,24,38,.06),0 6px 24px rgba(16,24,38,.06);
+  --display:"Unbounded","Golos Text",system-ui,sans-serif;
+  --body:"Golos Text",system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;
+  --mono:"JetBrains Mono",ui-monospace,Menlo,Consolas,monospace;
+}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){
+  color-scheme:dark;
+  --bg:#0C1119; --surface:#141B26; --surface-2:#19212E; --ink:#E6ECF4; --muted:#96A2B4; --line:#283346;
+  --accent:#7D98FF; --accent-ink:#0C1119; --accent-soft:#1C2645;
+  --ok:#43C27C; --bad:#FF6E60; --risk:#FF9A3D; --check:#E2BE3E; --opinion:#B198FF; --neutral:#8792A4;
+  --shadow:0 1px 2px rgba(0,0,0,.3),0 8px 28px rgba(0,0,0,.25);
+}}
+:root[data-theme="dark"]{
+  color-scheme:dark;
+  --bg:#0C1119; --surface:#141B26; --surface-2:#19212E; --ink:#E6ECF4; --muted:#96A2B4; --line:#283346;
+  --accent:#7D98FF; --accent-ink:#0C1119; --accent-soft:#1C2645;
+  --ok:#43C27C; --bad:#FF6E60; --risk:#FF9A3D; --check:#E2BE3E; --opinion:#B198FF; --neutral:#8792A4;
+  --shadow:0 1px 2px rgba(0,0,0,.3),0 8px 28px rgba(0,0,0,.25);
+}
+*{box-sizing:border-box}
+body{background:var(--bg);color:var(--ink);font-family:var(--body);font-size:15px;line-height:1.55;margin:0}
+a{color:var(--accent)}
+button,input,textarea,select{font:inherit;color:inherit}
+:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+.wrap{max-width:1240px;margin:0 auto;padding-inline:20px}
+@media (max-width:520px){.wrap{padding-inline:16px}}
+
+/* top bar */
+.top{position:sticky;top:env(safe-area-inset-top,0px);z-index:5;background:color-mix(in srgb,var(--bg) 88%,transparent);backdrop-filter:blur(10px);border-bottom:1px solid var(--line)}
+.top .wrap{display:flex;align-items:center;gap:20px;flex-wrap:wrap;padding-block:12px}
+.brand{display:flex;align-items:center;gap:10px;text-decoration:none;color:var(--ink)}
+.brand b{font-family:var(--display);font-weight:700;font-size:18px;letter-spacing:-.01em}
+.brand small{color:var(--muted);font-size:12.5px;display:block;line-height:1.2}
+.tabs{display:flex;gap:4px;margin-left:auto;background:var(--surface);border:1px solid var(--line);border-radius:999px;padding:4px;overflow-x:auto;max-width:100%}
+.tab{border:0;background:none;padding:7px 14px;border-radius:999px;cursor:pointer;color:var(--muted);font-weight:500;white-space:nowrap}
+.tab[aria-selected="true"]{background:var(--ink);color:var(--bg)}
+
+@media (max-width:620px){.tabs{margin-left:0;width:100%}.tab{flex:1;padding:7px 8px;font-size:13.5px}}
+/* hero line */
+.intro{padding-block:26px 8px;display:flex;justify-content:space-between;gap:24px;align-items:end;flex-wrap:wrap}
+.intro h1{font-family:var(--display);font-weight:700;font-size:clamp(24px,3.4vw,36px);line-height:1.12;letter-spacing:-.02em;margin:0;max-width:20ch;text-wrap:balance}
+.intro p{margin:0;color:var(--muted);max-width:52ch}
+
+/* layout */
+.grid{display:grid;grid-template-columns:minmax(0,5fr) minmax(0,7fr);gap:20px;padding-block:18px 48px;align-items:start}
+@media (max-width:920px){.grid{grid-template-columns:1fr}}
+.panel{background:var(--surface);border:1px solid var(--line);border-radius:14px;box-shadow:var(--shadow)}
+.input-col{padding:18px;display:flex;flex-direction:column;gap:14px;position:sticky;top:78px}
+@media (max-width:920px){.input-col{position:static}}
+.lbl{font-size:12px;font-weight:600;letter-spacing:.06em;text-transform:uppercase;color:var(--muted);display:block;margin-bottom:6px}
+.field{width:100%;background:var(--surface-2);border:1px solid var(--line);border-radius:10px;padding:10px 12px}
+textarea.field{min-height:230px;resize:vertical;line-height:1.55}
+.examples{display:flex;gap:6px;flex-wrap:wrap}
+.chip{border:1px solid var(--line);background:var(--surface);border-radius:999px;padding:5px 11px;font-size:13px;cursor:pointer;color:var(--ink)}
+.chip:hover{border-color:var(--accent)}
+.chip[aria-pressed="true"]{background:var(--accent-soft);border-color:var(--accent);color:var(--accent)}
+.actions{display:flex;gap:8px;flex-wrap:wrap}
+.btn{border:1px solid var(--line);background:var(--surface);border-radius:10px;padding:10px 16px;font-weight:600;cursor:pointer;display:inline-flex;gap:8px;align-items:center}
+.btn.primary{background:var(--accent);border-color:var(--accent);color:var(--accent-ink)}
+.btn:disabled{opacity:.5;cursor:not-allowed}
+.btn.ghost{background:none}
+.engines{border-top:1px dashed var(--line);padding-top:12px;display:grid;gap:6px;font-size:13px}
+.eng{display:flex;gap:8px;align-items:baseline}
+.dot{width:8px;height:8px;border-radius:50%;flex:none;background:var(--neutral);transform:translateY(-1px)}
+.dot.on{background:var(--ok)} .dot.off{background:var(--line)} .dot.wait{background:var(--check)}
+.eng span.m{color:var(--muted)}
+.linkbtn{background:none;border:0;padding:0;color:var(--accent);cursor:pointer;text-decoration:underline;font-size:13px}
+
+/* report */
+.report{display:flex;flex-direction:column;gap:16px}
+.summary{padding:20px;display:grid;grid-template-columns:auto 1fr;gap:22px;align-items:center}
+@media (max-width:560px){.summary{grid-template-columns:1fr}}
+.gauge{position:relative;width:132px;height:132px}
+.gauge svg{width:100%;height:100%;transform:rotate(-90deg)}
+.gauge .val{position:absolute;inset:0;display:grid;place-items:center;text-align:center}
+.gauge .val b{font-family:var(--mono);font-size:36px;line-height:1;font-variant-numeric:tabular-nums}
+.gauge .val small{display:block;font-size:11px;color:var(--muted);letter-spacing:.06em;text-transform:uppercase;margin-top:4px}
+.verdict h2{font-family:var(--display);font-size:20px;font-weight:700;margin:0 0 4px;letter-spacing:-.01em;text-wrap:balance}
+.verdict p{margin:0 0 12px;color:var(--muted)}
+.bar{display:flex;height:10px;border-radius:999px;overflow:hidden;background:var(--surface-2)}
+.bar i{display:block;height:100%}
+.legend{display:flex;flex-wrap:wrap;gap:6px 14px;margin-top:10px;font-size:13px}
+.legend span{display:inline-flex;gap:6px;align-items:center;font-variant-numeric:tabular-nums}
+.legend i{width:9px;height:9px;border-radius:2px;display:inline-block}
+
+.sec{padding:18px 20px}
+.sec h3{font-family:var(--display);font-size:14px;font-weight:500;margin:0 0 12px;letter-spacing:.01em;display:flex;justify-content:space-between;gap:10px;align-items:center;flex-wrap:wrap}
+.marked{font-size:16px;line-height:1.9;white-space:pre-wrap;overflow-wrap:anywhere}
+.m{cursor:pointer;border-radius:3px;padding:1px 0;box-decoration-break:clone;-webkit-box-decoration-break:clone;border-bottom:2px solid transparent;transition:background .15s}
+.m sup{font-family:var(--mono);font-size:10px;font-weight:700;margin-right:2px;opacity:.8}
+.m.v-ok{background:color-mix(in srgb,var(--ok) 13%,transparent);border-color:var(--ok)}
+.m.v-bad{background:color-mix(in srgb,var(--bad) 15%,transparent);border-color:var(--bad);text-decoration:line-through;text-decoration-color:color-mix(in srgb,var(--bad) 55%,transparent)}
+.m.v-risk{background:color-mix(in srgb,var(--risk) 15%,transparent);border-color:var(--risk);border-bottom-style:dashed}
+.m.v-check{background:color-mix(in srgb,var(--check) 13%,transparent);border-color:var(--check);border-bottom-style:dotted}
+.m.v-opinion{border-color:var(--opinion);border-bottom-style:dotted}
+.m.v-neutral{border-color:transparent}
+.m.active{outline:2px solid var(--accent);outline-offset:1px}
+
+.filters{display:flex;gap:6px;flex-wrap:wrap}
+.claims{display:grid;gap:10px}
+.claim{border:1px solid var(--line);border-left:4px solid var(--c);border-radius:10px;padding:14px 16px;background:var(--surface);scroll-margin-top:90px;transition:box-shadow .2s}
+.claim.active{box-shadow:0 0 0 2px var(--accent)}
+.claim header{display:flex;gap:8px;align-items:center;flex-wrap:wrap;margin-bottom:6px}
+.claim .n{font-family:var(--mono);font-size:12px;color:var(--muted)}
+.pill{font-size:12px;font-weight:700;padding:2px 9px;border-radius:999px;background:color-mix(in srgb,var(--c) 16%,transparent);color:var(--c)}
+.src{font-size:11.5px;border:1px solid var(--line);border-radius:6px;padding:1px 7px;color:var(--muted)}
+.src.conflict{border-color:var(--risk);color:var(--risk)}
+.claim .ct{margin:0 0 8px;font-weight:500}
+.claim h4{font-size:11.5px;letter-spacing:.07em;text-transform:uppercase;color:var(--muted);margin:10px 0 4px}
+.claim ul{margin:0;padding-left:18px;display:grid;gap:4px}
+.claim .links{display:flex;gap:6px;flex-wrap:wrap;margin-top:8px}
+.claim .links a{font-size:13px;text-decoration:none;border:1px solid var(--line);border-radius:8px;padding:4px 9px;background:var(--surface-2)}
+.claim .links a:hover{border-color:var(--accent)}
+.v-ok{--c:var(--ok)} .v-bad{--c:var(--bad)} .v-risk{--c:var(--risk)} .v-check{--c:var(--check)} .v-opinion{--c:var(--opinion)} .v-neutral{--c:var(--neutral)}
+.fix{margin-top:8px;padding:8px 10px;border-radius:8px;background:color-mix(in srgb,var(--ok) 10%,transparent);font-size:14px}
+.prompt-box{background:var(--surface-2);border:1px solid var(--line);border-radius:10px;padding:12px;font-family:var(--mono);font-size:12.5px;white-space:pre-wrap;max-height:220px;overflow:auto}
+.note{font-size:13px;color:var(--muted)}
+.empty{padding:40px 20px;text-align:center;color:var(--muted)}
+.spin{display:inline-block;width:14px;height:14px;border:2px solid currentColor;border-right-color:transparent;border-radius:50%;animation:sp 0.8s linear infinite}
+@keyframes sp{to{transform:rotate(360deg)}}
+@media (prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important}}
+
+/* trainer */
+.train{max-width:760px;margin:0 auto;padding-block:24px 60px;display:grid;gap:16px}
+.train .panel{padding:20px}
+.round-head{display:flex;justify-content:space-between;gap:12px;align-items:baseline;flex-wrap:wrap}
+.round-head h2{font-family:var(--display);font-size:20px;margin:0}
+.progress{display:flex;gap:4px}
+.progress i{width:28px;height:6px;border-radius:3px;background:var(--line)}
+.progress i.done{background:var(--accent)}
+.stmt{display:grid;gap:8px;margin-top:14px}
+.st{text-align:left;border:1px solid var(--line);background:var(--surface-2);border-radius:10px;padding:12px 14px;cursor:pointer;display:grid;grid-template-columns:22px 1fr;gap:10px;align-items:start}
+.st .box{width:20px;height:20px;border-radius:6px;border:2px solid var(--line);display:grid;place-items:center;font-size:13px;font-weight:700;margin-top:1px}
+.st[aria-pressed="true"]{border-color:var(--bad);background:color-mix(in srgb,var(--bad) 8%,var(--surface))}
+.st[aria-pressed="true"] .box{border-color:var(--bad);background:var(--bad);color:#fff}
+.st.rev{cursor:default}
+.st .exp{grid-column:2;font-size:14px;color:var(--muted);margin-top:4px}
+.st .res{grid-column:2;display:flex;gap:6px;flex-wrap:wrap;margin-top:6px}
+.tag{font-size:12px;font-weight:700;padding:2px 8px;border-radius:999px}
+.tag.good{background:color-mix(in srgb,var(--ok) 16%,transparent);color:var(--ok)}
+.tag.miss{background:color-mix(in srgb,var(--bad) 16%,transparent);color:var(--bad)}
+.tag.tip{background:var(--accent-soft);color:var(--accent)}
+.scoreline{font-family:var(--mono);font-variant-numeric:tabular-nums;color:var(--muted)}
+.final{text-align:center;display:grid;gap:10px;justify-items:center}
+.final .big{font-family:var(--mono);font-size:52px;font-weight:700;line-height:1}
+.final h2{font-family:var(--display);margin:0;font-size:22px}
+.tips{display:flex;flex-wrap:wrap;gap:6px;justify-content:center}
+
+/* how */
+.how{padding-block:24px 60px;display:grid;gap:18px}
+.how .panel{padding:22px}
+.how h2{font-family:var(--display);font-size:20px;margin:0 0 12px;letter-spacing:-.01em}
+.how p{max-width:72ch}
+.pipe{display:grid;grid-template-columns:repeat(5,minmax(0,1fr));gap:10px;counter-reset:s}
+@media (max-width:860px){.pipe{grid-template-columns:1fr 1fr}}
+@media (max-width:480px){.pipe{grid-template-columns:1fr}}
+.step{border:1px solid var(--line);border-radius:10px;padding:14px;background:var(--surface-2);counter-increment:s}
+.step::before{content:counter(s);font-family:var(--mono);font-weight:700;color:var(--accent);display:block;margin-bottom:6px}
+.step b{display:block;margin-bottom:4px}
+.step span{font-size:13.5px;color:var(--muted)}
+.tbl{overflow-x:auto}
+table{border-collapse:collapse;width:100%;font-size:14px;min-width:560px}
+th,td{text-align:left;padding:9px 10px;border-bottom:1px solid var(--line);vertical-align:top}
+th{font-size:12px;letter-spacing:.06em;text-transform:uppercase;color:var(--muted);font-weight:600}
+.cols{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:14px}
+@media (max-width:800px){.cols{grid-template-columns:1fr}}
+.cols h3{font-size:15px;margin:0 0 6px}
+.cols ul{margin:0;padding-left:18px;display:grid;gap:4px;font-size:14px}
+
+.trusted{display:flex;flex-wrap:wrap;gap:6px}
+.trusted a{display:flex;flex-direction:column;text-decoration:none;border:1px solid var(--line);border-radius:10px;padding:6px 10px;background:var(--surface);color:var(--ink);min-width:0}
+.trusted a:hover{border-color:var(--ok)}
+.trusted b{font-size:13px;font-weight:600}
+.trusted small{font-size:11.5px;color:var(--muted)}
+.bib{margin:0;padding-left:22px;display:grid;gap:6px;font-size:14px;overflow-wrap:anywhere}
+.hist{display:grid;gap:6px}
+.hitem{display:grid;grid-template-columns:34px 1fr auto;gap:8px;align-items:center;text-align:left;border:1px solid var(--line);background:var(--surface-2);border-radius:8px;padding:6px 8px;cursor:pointer;font-size:13px}
+.hitem span{overflow:hidden;text-overflow:ellipsis;white-space:nowrap;min-width:0}
+.hitem time{color:var(--muted);font-size:12px}
+.hs{font-family:var(--mono);font-size:13px;text-align:center;border-radius:6px;padding:2px 0;background:var(--line)}
+.hs.high{background:color-mix(in srgb,var(--ok) 20%,transparent);color:var(--ok)} .hs.mid{background:color-mix(in srgb,var(--risk) 20%,transparent);color:var(--risk)} .hs.low{background:color-mix(in srgb,var(--bad) 20%,transparent);color:var(--bad)}
+#history{border-top:1px dashed var(--line);padding-top:12px;display:grid;gap:8px}
+.searchrow{display:flex;gap:8px;margin-bottom:12px;flex-wrap:wrap}.searchrow .field{flex:1;min-width:200px}
+.catalog{display:grid;grid-template-columns:repeat(auto-fill,minmax(300px,1fr));gap:14px;align-items:start}
+.cat{padding:18px}.cat h3{font-family:var(--display);font-size:14px;font-weight:500;margin:0 0 10px}
+.srcrow{display:grid;gap:2px;text-decoration:none;color:var(--ink);padding:10px 0;border-top:1px solid var(--line)}
+.srcrow:first-of-type{border-top:0}
+.srcrow small{color:var(--accent);font-size:12px}.srcrow span{font-size:13.5px;color:var(--muted)}
+@media (max-width:360px){.catalog{grid-template-columns:1fr}}
+/* modal */
+.modal{position:fixed;inset:0;background:rgba(8,12,20,.5);display:grid;place-items:center;padding:16px;z-index:20}
+.modal .panel{max-width:480px;width:100%;padding:20px;display:grid;gap:12px}
+.modal h2{font-family:var(--display);font-size:18px;margin:0}
+.toast{position:fixed;left:50%;bottom:calc(20px + env(safe-area-inset-bottom,0px));transform:translateX(-50%);background:var(--ink);color:var(--bg);padding:9px 16px;border-radius:10px;font-size:14px;z-index:30}
+</style>
+
+<header class="top">
+  <div class="wrap">
+    <a class="brand" href="#check" aria-label="TrustLens">
+      <svg width="34" height="34" viewBox="0 0 34 34" aria-hidden="true"><circle cx="14" cy="14" r="10.5" fill="none" stroke="var(--ink)" stroke-width="3"/><path d="M22 22l8 8" stroke="var(--ink)" stroke-width="3.4" stroke-linecap="round"/><path d="M9 14.5l3.4 3.3L19 11" fill="none" stroke="var(--accent)" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/></svg>
+      <span><b>TrustLens</b><small>Лупа доверия к ответам ИИ</small></span>
+    </a>
+    <nav class="tabs" role="tablist">
+      <button class="tab" role="tab" data-tab="check" aria-selected="true">Проверить ответ</button>
+      <button class="tab" role="tab" data-tab="train" aria-selected="false">Тренажёр</button>
+      <button class="tab" role="tab" data-tab="sources" aria-selected="false">Источники</button>
+      <button class="tab" role="tab" data-tab="how" aria-selected="false">Как это работает</button>
+    </nav>
+  </div>
+</header>
+
+<main>
+<!-- CHECK -->
+<section id="tab-check" class="wrap">
+  <div class="intro">
+    <h1>Вставь ответ ИИ. Мы покажем, чему в нём можно верить.</h1>
+    <p>TrustLens разбирает ответ на отдельные утверждения, ищет признаки выдумки, сверяет факты с источниками и объясняет каждое решение простыми словами.</p>
+  </div>
+  <div class="grid">
+    <form class="panel input-col" id="form">
+      <div>
+        <label class="lbl" for="q">Твой вопрос к ИИ (необязательно)</label>
+        <input class="field" id="q" placeholder="Например: расскажи об истории космоса">
+      </div>
+      <div>
+        <label class="lbl" for="answer">Ответ ИИ</label>
+        <textarea class="field" id="answer" placeholder="Вставь сюда ответ ChatGPT, Gemini или другого ИИ"></textarea>
+      </div>
+      <div>
+        <span class="lbl">Примеры</span>
+        <div class="examples" id="examples"></div>
+      </div>
+      <div class="actions">
+        <button class="btn primary" type="submit" id="run">Проверить</button>
+      </div>
+      <div class="engines" id="engines" aria-live="polite"></div>
+      <div id="history" hidden></div>
+    </form>
+
+    <div class="report" id="report"></div>
+  </div>
+</section>
+
+<!-- TRAINER -->
+<section id="tab-train" class="wrap" hidden>
+  <div class="intro">
+    <h1>Тренажёр: найди, где ИИ ошибся</h1>
+    <p>В каждом ответе спрятаны одна-две ошибки. Отметь утверждения, которые считаешь ошибкой, и узнай, по каким признакам их можно было поймать.</p>
+  </div>
+  <div class="train" id="train"></div>
+</section>
+
+<!-- SOURCES -->
+<section id="tab-sources" class="wrap" hidden>
+  <div class="intro">
+    <h1>Где искать правду, если ИИ не уверен</h1>
+    <p>Каталог надёжных сайтов по темам и пять вопросов, которые помогут понять, можно ли доверять любому источнику.</p>
+  </div>
+  <div class="how">
+    <form class="panel" id="srcForm">
+      <h2>Подобрать источники под вопрос</h2>
+      <div class="searchrow"><input class="field" id="srcq" placeholder="Например: сколько костей у человека" aria-label="Вопрос или факт"><button class="btn primary" type="submit">Подобрать</button></div>
+      <div id="srcres"></div>
+    </form>
+    <div class="panel">
+      <h2>Пять вопросов к любому источнику</h2>
+      <div class="pipe">
+        <div class="step"><b>Кто автор?</b><span>Учёный, госорган, редакция с именем. Анонимный пост или «эксперты говорят» не подходят.</span></div>
+        <div class="step"><b>Когда опубликовано?</b><span>Для новостей, законов и цифр важна свежесть. Ищи дату на странице.</span></div>
+        <div class="step"><b>Откуда данные?</b><span>Хороший источник ссылается на первоисточник: исследование, закон, статистику.</span></div>
+        <div class="step"><b>Совпадает ли с другими?</b><span>Факт подтверждают минимум два независимых источника.</span></div>
+        <div class="step"><b>Зачем это написано?</b><span>Реклама, продажа или эмоции снижают доверие. Нужны факты, а не убеждение.</span></div>
+      </div>
+    </div>
+    <div class="catalog" id="catalog"></div>
+  </div>
+</section>
+
+<!-- HOW -->
+<section id="tab-how" class="wrap" hidden>
+  <div class="intro">
+    <h1>Как TrustLens решает, чему доверять</h1>
+    <p>Мы не просим ещё один ИИ «поверить на слово». Каждое решение опирается на проверку, которую пользователь видит и может повторить сам.</p>
+  </div>
+  <div class="how">
+    <div class="panel">
+      <h2>Конвейер проверки</h2>
+      <div class="pipe">
+        <div class="step"><b>Разбор на утверждения</b><span>Ответ делится на отдельные фразы. Каждая проверяется отдельно, потому что ошибка обычно прячется в одной детали среди правды.</span></div>
+        <div class="step"><b>Тип утверждения</b><span>Факт, число, цитата, ссылка на исследование, мнение или совет. Мнение не проверяют как факт.</span></div>
+        <div class="step"><b>Признаки выдумки</b><span>Выдуманные источники, слишком точные цифры, даты из будущего, категоричность, чужие цитаты, противоречия внутри ответа.</span></div>
+        <div class="step"><b>Сверка с источниками</b><span>Локальная база проверенных фактов, пересчёт математики, поиск по Википедии и каталог надёжных сайтов по теме.</span></div>
+        <div class="step"><b>Объяснение и оценка</b><span>Цвет для каждой фразы, причина, как проверить самому, ссылки и общий индекс доверия от 0 до 100.</span></div>
+      </div>
+    </div>
+
+    <div class="panel">
+      <h2>Что означают цвета</h2>
+      <div class="tbl"><table>
+        <thead><tr><th>Метка</th><th>Когда ставим</th><th>Что делать</th></tr></thead>
+        <tbody>
+          <tr><td><span class="pill v-ok">Подтверждено</span></td><td>Совпадает с источником или верно посчитано</td><td>Можно использовать, указав первоисточник</td></tr>
+          <tr><td><span class="pill v-bad">Ошибка</span></td><td>Противоречит источнику, известный миф, ошибка в расчёте</td><td>Не использовать, исправить по источнику</td></tr>
+          <tr><td><span class="pill v-risk">Похоже на выдумку</span></td><td>Сильные признаки выдумки без подтверждения</td><td>Найти первоисточник, иначе не верить</td></tr>
+          <tr><td><span class="pill v-check">Проверь сам</span></td><td>Проверяемый факт без подтверждения и без тревожных признаков</td><td>Сверить с двумя независимыми источниками</td></tr>
+          <tr><td><span class="pill v-opinion">Мнение или совет</span></td><td>Оценка, рекомендация, прогноз</td><td>Сравнить с мнением специалистов</td></tr>
+        </tbody>
+      </table></div>
+    </div>
+
+    <div class="panel">
+      <h2>Десять признаков, по которым ловим выдумку</h2>
+      <div class="tbl"><table>
+        <thead><tr><th>Признак</th><th>Почему это подозрительно</th></tr></thead>
+        <tbody>
+          <tr><td>Исследование без ссылки</td><td>«Учёные доказали» без авторов, названия и года. Проверить невозможно, а модели легко сочиняют такие фразы.</td></tr>
+          <tr><td>Слишком точная цифра</td><td>73,4% звучит научно. Если рядом нет источника, точность ничего не значит.</td></tr>
+          <tr><td>DOI или ссылка</td><td>Модели генерируют правдоподобные адреса статей. Мы даём ссылку, чтобы открыть и убедиться.</td></tr>
+          <tr><td>Процент больше 100</td><td>«На 340% лучше» эффектно и почти всегда требует первоисточника.</td></tr>
+          <tr><td>Цитата знаменитости</td><td>Цитаты часто приписывают не тем людям. Нужна книга, речь или письмо.</td></tr>
+          <tr><td>Дата из будущего</td><td>Событие после текущего года описано как прошедшее.</td></tr>
+          <tr><td>Противоречие внутри ответа</td><td>Одно событие с разными годами в разных фразах. Минимум одна дата неверна.</td></tr>
+          <tr><td>Категоричность</td><td>«Всегда», «доказано», «единственный». Наука так говорит редко.</td></tr>
+          <tr><td>Устаревшие данные</td><td>«Сейчас», «последняя версия». У модели есть дата среза знаний.</td></tr>
+          <tr><td>Высокая цена ошибки</td><td>Здоровье, деньги, закон. Даже верный на вид ответ нужно сверить со специалистом.</td></tr>
+        </tbody>
+      </table></div>
+    </div>
+
+    <div class="panel">
+      <h2>Честно об ограничениях</h2>
+      <div class="cols">
+        <div><h3>Что уже работает</h3><ul><li>Разбор ответа и 10 признаков ошибок и выдумки</li><li>База из 58 проверенных фактов школьной программы с источниками</li><li>Проверка арифметики и процентов</li><li>Сверка чисел и дат с Википедией</li><li>Надёжные источники по 12 темам к каждому утверждению</li><li>Оценка ссылок из ответа: официальный сайт, СМИ, блог или неизвестный</li><li>Готовый список источников для доклада</li><li>История проверок и тренажёр из 6 раундов</li></ul></div>
+        <div><h3>Чего мы не обещаем</h3><ul><li>Индекс доверия подсказывает, а не выносит приговор</li><li>Википедия тоже может ошибаться</li><li>База фактов пока небольшая, поэтому многие утверждения получат метку «Проверь сам» со ссылками на надёжные источники</li><li>«Проверь сам» значит «не нашли подтверждения», а не «ложь»</li></ul></div>
+        <div><h3>Что дальше</h3><ul><li>Расширение для браузера поверх ChatGPT и Gemini</li><li>Telegram-бот для быстрой проверки</li><li>Открытая база фактов, которую пополняют учителя</li><li>Казахский и английский языки</li><li>Режим учителя: проверка рефератов на следы ИИ-ошибок</li></ul></div>
+      </div>
+    </div>
+  </div>
+</section>
+</main>
+
+
+<script>/* Trusted sources: a catalogue by topic, topic detection for a claim, and a reliability rating for links */
+const SRC = (() => {
+  const g = (site, q) => 'https://www.google.com/search?q=' + encodeURIComponent('site:' + site + ' ' + q);
+  const S = {
+    wiki: { name: 'Википедия', domain: 'ru.wikipedia.org', home: 'https://ru.wikipedia.org', kind: 'Энциклопедия', why: 'Статьи со ссылками на источники. Хороша для старта, но проверяй сноски.', url: q => 'https://ru.wikipedia.org/w/index.php?search=' + encodeURIComponent(q) },
+    britannica: { name: 'Britannica', domain: 'britannica.com', home: 'https://www.britannica.com', kind: 'Энциклопедия', why: 'Статьи пишут и проверяют учёные и редакторы с 1768 года.', url: q => 'https://www.britannica.com/search?query=' + encodeURIComponent(q) },
+    bre: { name: 'Большая российская энциклопедия', domain: 'bigenc.ru', home: 'https://bigenc.ru', kind: 'Энциклопедия', why: 'Научная энциклопедия, статьи подписаны авторами.', url: q => g('bigenc.ru', q) },
+    scholar: { name: 'Google Scholar', domain: 'scholar.google.com', home: 'https://scholar.google.com', kind: 'Научные статьи', why: 'Поиск по научным публикациям. Если исследования здесь нет, скорее всего его не существует.', url: q => 'https://scholar.google.com/scholar?q=' + encodeURIComponent(q) },
+    cyber: { name: 'КиберЛенинка', domain: 'cyberleninka.ru', home: 'https://cyberleninka.ru', kind: 'Научные статьи', why: 'Открытая библиотека научных статей на русском языке.', url: q => 'https://cyberleninka.ru/search?q=' + encodeURIComponent(q) },
+    factcheck: { name: 'Google Fact Check Explorer', domain: 'toolbox.google.com', home: 'https://toolbox.google.com/factcheck/explorer', kind: 'Фактчекинг', why: 'Собирает проверки фактов от независимых редакций со всего мира.', url: q => 'https://toolbox.google.com/factcheck/explorer/search/' + encodeURIComponent(q) + ';hl=ru' },
+    nasa: { name: 'NASA', domain: 'nasa.gov', home: 'https://www.nasa.gov', kind: 'Космос', why: 'Официальные данные космического агентства США.', url: q => g('nasa.gov', q) },
+    esa: { name: 'ESA', domain: 'esa.int', home: 'https://www.esa.int', kind: 'Космос', why: 'Европейское космическое агентство.', url: q => g('esa.int', q) },
+    elementy: { name: 'Элементы', domain: 'elementy.ru', home: 'https://elementy.ru', kind: 'Научпоп', why: 'Научно-популярный сайт, статьи пишут учёные.', url: q => g('elementy.ru', q) },
+    who: { name: 'ВОЗ', domain: 'who.int', home: 'https://www.who.int/ru', kind: 'Здоровье', why: 'Всемирная организация здравоохранения, официальные рекомендации.', url: q => g('who.int', q) },
+    pubmed: { name: 'PubMed', domain: 'pubmed.ncbi.nlm.nih.gov', home: 'https://pubmed.ncbi.nlm.nih.gov', kind: 'Медицина', why: 'База медицинских исследований Национальной библиотеки медицины США.', url: q => 'https://pubmed.ncbi.nlm.nih.gov/?term=' + encodeURIComponent(q) },
+    cochrane: { name: 'Cochrane', domain: 'cochranelibrary.com', home: 'https://www.cochranelibrary.com', kind: 'Медицина', why: 'Обзоры, которые сводят вместе все исследования по вопросу.', url: q => g('cochranelibrary.com', q) },
+    factbook: { name: 'CIA World Factbook', domain: 'cia.gov', home: 'https://www.cia.gov/the-world-factbook/', kind: 'Страны', why: 'Справочник по всем странам: население, площадь, столицы.', url: q => g('cia.gov/the-world-factbook', q) },
+    owid: { name: 'Our World in Data', domain: 'ourworldindata.org', home: 'https://ourworldindata.org', kind: 'Статистика', why: 'Графики и данные с указанием первоисточника для каждой цифры.', url: q => 'https://ourworldindata.org/search?q=' + encodeURIComponent(q) },
+    worldbank: { name: 'Всемирный банк: данные', domain: 'data.worldbank.org', home: 'https://data.worldbank.org', kind: 'Статистика', why: 'Официальная статистика по экономике и населению стран.', url: q => g('data.worldbank.org', q) },
+    statkz: { name: 'Бюро национальной статистики РК', domain: 'stat.gov.kz', home: 'https://stat.gov.kz', kind: 'Казахстан', why: 'Официальная статистика Казахстана.', url: q => g('stat.gov.kz', q) },
+    govkz: { name: 'Портал gov.kz', domain: 'gov.kz', home: 'https://www.gov.kz', kind: 'Казахстан', why: 'Официальные сайты госорганов Казахстана.', url: q => g('gov.kz', q) },
+    adilet: { name: 'Әділет', domain: 'adilet.zan.kz', home: 'https://adilet.zan.kz', kind: 'Законы', why: 'Официальная база законов Республики Казахстан.', url: q => g('adilet.zan.kz', q) },
+    pravo: { name: 'Официальный интернет-портал правовой информации', domain: 'pravo.gov.ru', home: 'http://pravo.gov.ru', kind: 'Законы', why: 'Официальные тексты законов России.', url: q => g('pravo.gov.ru', q) },
+    nbk: { name: 'Национальный банк РК', domain: 'nationalbank.kz', home: 'https://nationalbank.kz', kind: 'Финансы', why: 'Официальные курсы, ставки и финансовая статистика.', url: q => g('nationalbank.kz', q) },
+    imf: { name: 'МВФ', domain: 'imf.org', home: 'https://www.imf.org', kind: 'Финансы', why: 'Данные и прогнозы Международного валютного фонда.', url: q => g('imf.org', q) },
+    wikiquote: { name: 'Викицитатник', domain: 'ru.wikiquote.org', home: 'https://ru.wikiquote.org', kind: 'Цитаты', why: 'Цитаты с указанием, где они сказаны, и раздел «Приписываемые».', url: q => 'https://ru.wikiquote.org/w/index.php?search=' + encodeURIComponent(q) },
+    qi: { name: 'Quote Investigator', domain: 'quoteinvestigator.com', home: 'https://quoteinvestigator.com', kind: 'Цитаты', why: 'Расследует, кто на самом деле сказал известную фразу.', url: q => 'https://quoteinvestigator.com/?s=' + encodeURIComponent(q) },
+    feb: { name: 'ФЭБ: русская литература', domain: 'feb-web.ru', home: 'http://feb-web.ru', kind: 'Литература', why: 'Академические издания классиков и словари.', url: q => g('feb-web.ru', q) },
+    arzamas: { name: 'Arzamas', domain: 'arzamas.academy', home: 'https://arzamas.academy', kind: 'Гуманитарные науки', why: 'Курсы и статьи историков и филологов.', url: q => g('arzamas.academy', q) },
+    unesco: { name: 'ЮНЕСКО', domain: 'unesco.org', home: 'https://www.unesco.org/ru', kind: 'Культура', why: 'Официальные данные о наследии и образовании.', url: q => g('unesco.org', q) },
+  };
+
+  const TOPICS = [
+    { id: 'kz', name: 'Казахстан', re: /(казахстан|астан|алмат|шымкент|тенге|абай|казах)/, src: ['statkz', 'govkz', 'adilet', 'britannica'] },
+    { id: 'health', name: 'Здоровье', re: /(здоров|болезн|лекарств|таблет|витамин|врач|вирус|бактери|кост|мозг|сердц|кров|иммун|питани|диет|сон |сна |симптом|лечени|прививк|вакцин)/, src: ['who', 'pubmed', 'cochrane'] },
+    { id: 'law', name: 'Право', re: /(закон|кодекс|штраф|суд|конституц|стать[яи] \d|наказани|прав[ао] (на|граждан))/, src: ['adilet', 'pravo'] },
+    { id: 'money', name: 'Экономика', re: /(налог|кредит|инвест|банк|инфляц|курс (доллар|валют|тенге)|ввп|экономик|валют|бюджет|зарплат)/, src: ['nbk', 'worldbank', 'imf', 'owid'] },
+    { id: 'space', name: 'Космос', re: /(полет|витк|гагарин|космос|космонавт|астронавт|планет|звезд|галактик|луна|луны|луну|солнц|орбит|nasa|наса|ракет|спутник|марс|юпитер)/, src: ['nasa', 'esa', 'britannica', 'elementy'] },
+    { id: 'science', name: 'Наука', re: /(физик|хими|скорост|атом|молекул|элемент|энерги|температур|кипит|давлени|гравитац|свет|эволюц|клетк|днк|ген[аоы ]|вид[аы] |исследовани|ученые|ученых|журнал|nature|doi|учат|школьник)/, src: ['elementy', 'scholar', 'cyber', 'britannica'] },
+    { id: 'geo', name: 'География', re: /(стран|столиц|гора|горы|рек[аиу]|озер|океан|мор[ея]|материк|населени|площад|климат|город|эверест|пустын)/, src: ['factbook', 'britannica', 'owid', 'worldbank'] },
+    { id: 'history', name: 'История', re: /((^|[^а-я])(век|века|веке|веку|хан|хана|ханы|царь|царя|царю)([^а-я]|$)|войн|импери|король|революци|родил|умер|основан|истори|ссср|древн|династи|битв)/, src: ['bre', 'britannica', 'arzamas'] },
+    { id: 'quote', name: 'Цитаты', re: /(цитат|сказал|говорил|произнес|«[^»]{12,}»)/, src: ['wikiquote', 'qi'] },
+    { id: 'lit', name: 'Литература', re: /(роман|книг|поэт|писател|стих|поэм|повест|рассказ|автор|написал)/, src: ['feb', 'bre', 'britannica'] },
+    { id: 'culture', name: 'Культура', re: /(картин|художник|музе|архитектур|памятник|театр|композитор|музык)/, src: ['britannica', 'unesco', 'arzamas'] },
+    { id: 'tech', name: 'Технологии', re: /(интернет|компьютер|iphone|айфон|chatgpt|openai|google|гугл|apple|microsoft|нейросет|искусственн|программ|смартфон|ios|android)/, src: ['britannica', 'wiki', 'scholar'] },
+  ];
+
+  const norm = s => s.toLowerCase().replace(/ё/g, 'е');
+  function topics(text) {
+    const n = norm(text);
+    return TOPICS.filter(t => t.re.test(n));
+  }
+  /* compact search query: names and meaningful words, no filler */
+  const STOP = new Set('и в во на по с со к от до из за о об что это как для при был была было были который которая которые также кстати около всего очень его ее их он она они я мы вы ты бы же ли не ни а но или то так уже еще году года год лет время'.split(' '));
+  function query(text) {
+    const words = text.replace(/[«»"“”„()\[\],.;:!?—–-]/g, ' ').split(/\s+/).filter(w => w.length > 2 && !STOP.has(norm(w)));
+    const names = words.filter((w, i) => /^[A-ZА-ЯЁ]/.test(w) && i > 0);
+    const rest = words.filter(w => !names.includes(w));
+    return names.concat(rest).slice(0, 7).join(' ');
+  }
+  function forClaim(text, max = 4, ctx = '') {
+    const ts = topics(text + ' ' + ctx);
+    let q = query(text);
+    if (ctx && !/[A-ZА-ЯЁ]/.test(text.slice(1))) q = ctx.split(' ').filter(Boolean).slice(0, 2).join(' ') + ' ' + q;
+    const ids = [];
+    ts.forEach(t => t.src.forEach(id => { if (!ids.includes(id)) ids.push(id); }));
+    if (!ids.includes('wiki')) ids.push('wiki');
+    const list = ids.slice(0, max).map(id => ({ id, ...S[id], link: S[id].url(q) }));
+    list.push({ id: 'factcheck', ...S.factcheck, link: S.factcheck.url(q) });
+    return { topics: ts.map(t => t.name), items: list, q };
+  }
+
+  /* link reliability */
+  const TRUSTED = [/\.gov(\.[a-z]{2})?$/, /\.gov\.kz$/, /\.edu(\.[a-z]{2})?$/, /\.edu\.kz$/, /\.ac\.[a-z]{2}$/, /(^|\.)wikipedia\.org$/, /(^|\.)britannica\.com$/, /(^|\.)bigenc\.ru$/, /(^|\.)who\.int$/, /(^|\.)nasa\.gov$/, /(^|\.)esa\.int$/, /(^|\.)un\.org$/, /(^|\.)unesco\.org$/, /(^|\.)nature\.com$/, /(^|\.)science\.org$/, /(^|\.)ncbi\.nlm\.nih\.gov$/, /(^|\.)cochranelibrary\.com$/, /(^|\.)cyberleninka\.ru$/, /(^|\.)doi\.org$/, /(^|\.)worldbank\.org$/, /(^|\.)imf\.org$/, /(^|\.)ourworldindata\.org$/, /(^|\.)adilet\.zan\.kz$/, /(^|\.)stat\.gov\.kz$/, /(^|\.)nationalbank\.kz$/, /(^|\.)arxiv\.org$/];
+  const MEDIA = [/(^|\.)bbc\.(com|co\.uk)$/, /(^|\.)reuters\.com$/, /(^|\.)apnews\.com$/, /(^|\.)nytimes\.com$/, /(^|\.)theguardian\.com$/, /(^|\.)tass\.ru$/, /(^|\.)ria\.ru$/, /(^|\.)kazinform\.kz$/, /(^|\.)tengrinews\.kz$/, /(^|\.)kursiv\.media$/, /(^|\.)forbes\.(com|kz|ru)$/, /(^|\.)rbc\.ru$/];
+  const WEAK = [/(^|\.)(pinterest|facebook|instagram|tiktok|vk|t\.me|telegram|twitter|x|youtube|reddit|quora|otvet\.mail|livejournal|dzen|zen\.yandex|medium|blogspot|wordpress)\./, /^t\.me$/, /^x\.com$/];
+  function rateUrl(u) {
+    let host;
+    try { host = new URL(/^https?:/.test(u) ? u : 'https://' + u).hostname.replace(/^www\./, ''); } catch { return null; }
+    if (TRUSTED.some(r => r.test(host))) return { host, level: 'trusted', label: 'Надёжный тип сайта', why: `${host}: официальный, научный или энциклопедический сайт. Открой ссылку и убедись, что страница существует и говорит то же самое.` };
+    if (MEDIA.some(r => r.test(host))) return { host, level: 'media', label: 'СМИ', why: `${host}: известное СМИ. Хорошо для новостей, но для фактов лучше найти первоисточник, на который ссылается статья.` };
+    if (WEAK.some(r => r.test(host))) return { host, level: 'weak', label: 'Соцсеть или блог', why: `${host}: соцсеть, блог или форум. Здесь любой может написать что угодно, это не источник факта.` };
+    return { host, level: 'unknown', label: 'Неизвестный сайт', why: `${host}: мы не знаем этот сайт. ИИ иногда выдумывает адреса. Открой ссылку и проверь автора, дату и ссылки на первоисточники.` };
+  }
+
+  return { S, TOPICS, topics, forClaim, rateUrl, query };
+})();
+if (typeof module !== 'undefined') module.exports = SRC;
+</script>
+<script>/* TrustLens engine: splits an AI answer into claims, finds hallucination signals,
+   checks claims against a local fact base and arithmetic, and explains the verdict. */
+const TL = (() => {
+  const SR = typeof SRC !== 'undefined' ? SRC : require('./sources.js');
+  const NOW_YEAR = new Date().getFullYear();
+  const norm = s => s.toLowerCase().replace(/ё/g, 'е').replace(/[  ]/g, ' ');
+
+  /* ---------- 1. Splitting into claims ---------- */
+  const ABBR = new Set(['г','гг','т','е','д','п','др','пр','см','им','ул','стр','н','э','в','вв','ок','рис','табл','млн','млрд','тыс','проф','акад','mr','dr','vs','e','g','i','etc','ст','чел','руб','долл','англ','лат','греч','напр']);
+  function splitClaims(text) {
+    const claims = [];
+    let start = 0;
+    const push = (s, e) => {
+      let seg = text.slice(s, e);
+      const lead = seg.match(/^\s*(?:(?:[-–—*•]|\d{1,2}[.)])\s+)?/)[0].length;
+      s += lead; seg = seg.slice(lead);
+      const trail = seg.length - seg.trimEnd().length;
+      e -= trail; seg = seg.trimEnd();
+      if (seg.replace(/[^A-Za-zА-Яа-яЁё0-9]/g, '').length >= 3) {
+        claims.push({ id: claims.length + 1, text: seg, start: s, end: e, n: norm(seg) });
+      }
+    };
+    for (let i = 0; i < text.length; i++) {
+      const ch = text[i];
+      if (ch === '\n') { push(start, i); start = i + 1; continue; }
+      if ('.!?…'.includes(ch)) {
+        let j = i;
+        while (j + 1 < text.length && '.!?…"»)”'.includes(text[j + 1])) j++;
+        const next = text[j + 1];
+        if (next !== undefined && !/\s/.test(next)) continue;
+        if (ch === '.') {
+          const before = text.slice(start, i).match(/([A-Za-zА-Яа-яЁё]+)$/);
+          if (before && (ABBR.has(before[1].toLowerCase()) || /^[A-ZА-ЯЁ]$/.test(before[1]))) continue;
+        }
+        const rest = text.slice(j + 1).match(/^[ \t]*(\S)/);
+        if (rest && /[a-zа-яё]/.test(rest[1])) continue;
+        push(start, j + 1); start = j + 1; i = j;
+      }
+    }
+    push(start, text.length);
+    return claims;
+  }
+
+  /* ---------- 2. Numbers ---------- */
+  const WORDNUM = { 'один':1,'одна':1,'два':2,'две':2,'три':3,'четыре':4,'пять':5,'шесть':6,'семь':7,'восемь':8,'девять':9,'десять':10,'одиннадцать':11,'двенадцать':12,'двух':2,'трех':3,'четырех':4,'пяти':5,'шести':6,'семи':7,'восьми':8,'девяти':9,'десяти':10,'одного':1,'одной':1 };
+  const MULT = { 'тыс':1e3,'тысяч':1e3,'тысячи':1e3,'млн':1e6,'миллион':1e6,'миллиона':1e6,'миллионов':1e6,'млрд':1e9,'миллиард':1e9,'миллиарда':1e9,'миллиардов':1e9 };
+  function numbers(n) {
+    const out = [];
+    const re = /(\d{1,3}(?:[ ]\d{3})+|\d+)(?:[.,](\d+))?(?:\s*(тыс[а-яa-z]*|млн|миллион[а-яa-z]*|млрд|миллиард[а-яa-z]*))?/g;
+    let m;
+    while ((m = re.exec(n))) {
+      let v = parseFloat(m[1].replace(/ /g, '') + (m[2] ? '.' + m[2] : ''));
+      let mult = 1;
+      if (m[3]) { const k = Object.keys(MULT).find(k => m[3].startsWith(k)); if (k) mult = MULT[k]; }
+      out.push({ v: v * mult, raw: m[0].trim(), decimals: !!m[2], isYear: !m[2] && !m[3] && /^(1[0-9]{3}|20[0-9]{2})$/.test(m[1]) });
+    }
+    for (const w of n.split(/[^а-я]+/)) if (WORDNUM[w]) out.push({ v: WORDNUM[w], raw: w, decimals: false, isYear: false });
+    return out;
+  }
+  const years = n => numbers(n).filter(x => x.isYear).map(x => x.v);
+
+  /* ---------- 3. Local fact base ---------- */
+  const W = t => 'https://ru.wikipedia.org/wiki/' + encodeURIComponent(t);
+  const FACTS = [
+    { when: [/гагарин/, /(полет|космос|восток)/], unless: /(открыт[а-яa-z]* космос|витк|минут)/, year: [1961], fact: 'Юрий Гагарин полетел в космос 12 апреля 1961 года.', src: W('Восток-1') },
+    { when: [/гагарин/, /витк/], num: { vals: [1], tol: 0, min: 1, max: 30 }, fact: 'Гагарин совершил один виток вокруг Земли.', src: W('Восток-1') },
+    { when: [/(восток-1|гагарин)/, /минут/], num: { vals: [108], tol: 2, min: 20, max: 500 }, fact: 'Полёт «Восток-1» длился 108 минут.', src: W('Восток-1') },
+    { when: [/(открыт[а-яa-z]* космос|выход[а-яa-z]* в космос|выш[а-яa-z]* в космос)/, /перв/], word: /леонов/, wrong: /(гагарин|армстронг|терешков|титов)/, year: [1965], fact: 'Первым в открытый космос вышел Алексей Леонов 18 марта 1965 года.', src: W('Леонов, Алексей Архипович') },
+    { when: [/перв[а-яa-z]* женщин/, /космос/], word: /терешков/, wrong: /(савицк|ride|райд)/, year: [1963], fact: 'Первая женщина в космосе — Валентина Терешкова, 1963 год.', src: W('Терешкова, Валентина Владимировна') },
+    { when: [/(армстронг|высадк[а-яa-z]* на луну|ступил[а-яa-z]* на луну|аполлон.?11|apollo.?11)/], year: [1969], fact: 'Высадка «Аполлона-11» на Луну и первый шаг Нила Армстронга — июль 1969 года.', src: W('Аполлон-11') },
+    { when: [/колумб/, /америк/], year: [1492], fact: 'Колумб достиг Америки в 1492 году.', src: W('Открытие Америки') },
+    { when: [/втор[а-яa-z]* миров[а-яa-z]* войн/], year: [1939, 1945], fact: 'Вторая мировая война шла с 1939 по 1945 год.', src: W('Вторая мировая война') },
+    { when: [/перв[а-яa-z]* миров[а-яa-z]* войн/], year: [1914, 1918], fact: 'Первая мировая война шла с 1914 по 1918 год.', src: W('Первая мировая война') },
+    { when: [/(ссср|советск[а-яa-z]* союз)/, /(распа|прекратил)/], year: [1991], fact: 'СССР распался в 1991 году.', src: W('Распад СССР') },
+    { when: [/казахстан/, /независимост/], year: [1991], fact: 'Казахстан провозгласил независимость 16 декабря 1991 года.', src: W('Казахстан') },
+    { when: [/чернобыл/, /(авари|катастроф)/], year: [1986], fact: 'Авария на Чернобыльской АЭС произошла 26 апреля 1986 года.', src: W('Авария на Чернобыльской АЭС') },
+    { when: [/пушкин/, /родил/], year: [1799], fact: 'А. С. Пушкин родился в 1799 году.', src: W('Пушкин, Александр Сергеевич') },
+    { when: [/абай/, /родил/], year: [1845], fact: 'Абай Кунанбаев родился в 1845 году.', src: W('Абай Кунанбаев') },
+    { when: [/войн[а-яa-z]* и мир/, /(написал|автор|создал|роман)/], word: /толст/, fact: 'Роман «Война и мир» написал Лев Толстой.', src: W('Война и мир') },
+    { when: [/маленьк[а-яa-z]* принц/, /(написал|автор|создал)/], word: /(сент|экзюпер)/, fact: '«Маленького принца» написал Антуан де Сент-Экзюпери (1943).', src: W('Маленький принц') },
+    { when: [/гарри поттер/, /(написал|автор|создал)/], word: /роулинг/, fact: 'Книги о Гарри Поттере написала Джоан Роулинг.', src: W('Гарри Поттер') },
+    { when: [/гарри поттер/, /(вышл|вышел|опубликов|перв[а-яa-z]* (книг|част))/], unless: /фильм/, year: [1997], fact: 'Первая книга о Гарри Поттере вышла в 1997 году.', src: W('Гарри Поттер и философский камень') },
+    { when: [/гамлет/, /(написал|автор|создал)/], word: /шекспир/, fact: '«Гамлета» написал Уильям Шекспир.', src: W('Гамлет') },
+    { when: [/(мон[а-яa-z]* лиз|джоконд)/, /(написал|автор|создал|кист)/], word: /(леонардо|да винчи)/, fact: '«Мону Лизу» написал Леонардо да Винчи.', src: W('Мона Лиза') },
+    { when: [/(периодическ[а-яa-z]* (систем|таблиц|закон))/, /(открыл|создал|автор|придумал|разработал)/], word: /менделеев/, fact: 'Периодический закон открыл Дмитрий Менделеев (1869).', src: W('Периодическая система химических элементов') },
+    { when: [/(всемирн[а-яa-z]* тяготени|закон[а-яa-z]* гравитаци)/, /(открыл|сформулировал|автор)/], word: /ньютон/, fact: 'Закон всемирного тяготения сформулировал Исаак Ньютон.', src: W('Закон всемирного тяготения') },
+    { when: [/теори[а-яa-z]* относительност/, /(создал|автор|разработал|открыл|придумал)/], word: /эйнштейн/, fact: 'Теорию относительности создал Альберт Эйнштейн.', src: W('Теория относительности') },
+    { when: [/интернет/, /(изобр|создал|придумал)/], wrong: /(гейтс|джобс|цукерберг|маск)/, fact: 'Интернет вырос из сети ARPANET (1969); его протоколы TCP/IP разработали Винтон Серф и Роберт Кан, а веб придумал Тим Бернерс-Ли. Билл Гейтс к этому отношения не имеет.', src: W('Интернет') },
+    { when: [/(всемирн[а-яa-z]* паутин|world wide web|\bwww\b)/, /(изобр|создал|придумал)/], word: /бернерс/, fact: 'Всемирную паутину придумал Тим Бернерс-Ли в 1989–1991 годах.', src: W('Всемирная паутина') },
+    { when: [/(iphone|айфон)/, /перв/], year: [2007], fact: 'Первый iPhone представили в январе 2007 года.', src: W('IPhone (первое поколение)') },
+    { when: [/(chatgpt|чатгпт|чат gpt)/, /(представ|запущ|выпущ|появил|вышел)/], year: [2022], fact: 'ChatGPT открыли для всех 30 ноября 2022 года.', src: W('ChatGPT') },
+    { when: [/(google|гугл)/, /основ/], year: [1998], fact: 'Google основан в 1998 году.', src: W('Google') },
+    { when: [/(двойн[а-яa-z]* спирал|структур[а-яa-z]* днк)/, /(открыл|описал|установил|открыт)/], year: [1953], fact: 'Двойную спираль ДНК описали Уотсон и Крик в 1953 году.', src: W('Дезоксирибонуклеиновая кислота') },
+    { when: [/столиц/, /австрали/], word: /канберр/, fact: 'Столица Австралии — Канберра, а не Сидней.', src: W('Канберра') },
+    { when: [/столиц/, /казахстан/], word: /астан/, fact: 'Столица Казахстана — Астана (с 1997 года).', src: W('Астана') },
+    { when: [/столиц/, /канад/], word: /оттав/, fact: 'Столица Канады — Оттава.', src: W('Оттава') },
+    { when: [/столиц/, /турци/], word: /анкар/, fact: 'Столица Турции — Анкара, а не Стамбул.', src: W('Анкара') },
+    { when: [/столиц/, /бразили/], word: /бразилиа/, fact: 'Столица Бразилии — город Бразилиа.', src: W('Бразилиа') },
+    { when: [/столиц/, /(сша|соединенн[а-яa-z]* штат)/], word: /вашингтон/, fact: 'Столица США — Вашингтон.', src: W('Вашингтон') },
+    { when: [/(эверест|джомолунгм)/, /(высот|метр|\d)/], num: { vals: [8849, 8848], tol: 3, min: 5000, max: 12000 }, fact: 'Высота Эвереста — 8849 м над уровнем моря.', src: W('Джомолунгма') },
+    { when: [/байкал/, /глуб/, /\d/], num: { vals: [1642], tol: 5, min: 300, max: 5000 }, fact: 'Максимальная глубина Байкала — 1642 м.', src: W('Байкал') },
+    { when: [/планет/, /солнечн[а-яa-z]* систем/], unless: /(карликов|спутник|луны|лун )/, num: { vals: [8], tol: 0, min: 5, max: 15 }, fact: 'В Солнечной системе 8 планет. Плутон с 2006 года считается карликовой планетой.', src: W('Солнечная система') },
+    { when: [/(ближайш[а-яa-z]* к солнцу|к солнцу ближ)/, /планет/], word: /меркури/, fact: 'Ближайшая к Солнцу планета — Меркурий.', src: W('Меркурий') },
+    { when: [/(самая больш|крупнейш)[а-яa-z]* планет/], word: /юпитер/, fact: 'Самая большая планета Солнечной системы — Юпитер.', src: W('Юпитер') },
+    { when: [/лун/, /(расстояни|удален|находится|км)/, /земл/], unless: /(диаметр|радиус|масс)/, num: { vals: [384400], tol: 25000, min: 10000, max: 1e8 }, fact: 'Среднее расстояние от Земли до Луны — около 384 400 км.', src: W('Луна') },
+    { when: [/солнц/, /(расстояни|удален)/, /земл/], num: { vals: [149.6e6], tol: 3e6, min: 1e5, max: 1e10 }, fact: 'Среднее расстояние от Земли до Солнца — около 149,6 млн км.', src: W('Астрономическая единица') },
+    { when: [/скорост[а-яa-z]* свет/], num: { vals: [299792, 300000, 299792458, 300000000], tol: 1500, min: 1000, max: 1e10 }, fact: 'Скорость света в вакууме — 299 792 км/с (около 300 000 км/с).', src: W('Скорость света') },
+    { when: [/ускорени[а-яa-z]* свободн[а-яa-z]* падени/], num: { vals: [9.8, 9.81], tol: 0.06, min: 1, max: 100 }, fact: 'Ускорение свободного падения у поверхности Земли — около 9,8 м/с².', src: W('Ускорение свободного падения') },
+    { when: [/вод/, /кип/, /(°|градус)/], unless: /(гор|эверест|высот|пониж|ниже|соле|давлени[а-яa-z]* (ниже|выше|повыш))/, num: { vals: [100], tol: 0.5, min: 20, max: 400 }, fact: 'При нормальном атмосферном давлении вода кипит при 100 °C.', src: W('Кипение') },
+    { when: [/вод/, /(замерза|лед|леде)/, /(°|градус)/], unless: /(соле|морск)/, num: { vals: [0], tol: 0.5, min: -100, max: 100 }, fact: 'Чистая вода замерзает при 0 °C.', src: W('Лёд') },
+    { when: [/кост/, /(взросл|скелет|человек)/], unless: /(ребен|младен|новорожд)/, num: { vals: [206], tol: 0, min: 100, max: 400 }, fact: 'У взрослого человека 206 костей.', src: W('Скелет человека') },
+    { when: [/хромосом/, /человек/], num: { vals: [46, 23], tol: 0, min: 10, max: 100 }, fact: 'У человека 46 хромосом (23 пары).', src: W('Кариотип человека') },
+    { when: [/сердц/, /камер/], unless: /(рыб|лягуш|земноводн)/, num: { vals: [4], tol: 0, min: 1, max: 10 }, fact: 'Сердце человека четырёхкамерное.', src: W('Сердце') },
+    { when: [/зуб/, /взросл/], num: { vals: [32, 28], tol: 0, min: 10, max: 60 }, fact: 'У взрослого человека 28–32 постоянных зуба.', src: W('Зубы человека') },
+    { when: [/(оборот|облет|вращ)/, /вокруг солнц/, /(дн|сут)/], num: { vals: [365, 365.25, 366], tol: 0.3, min: 100, max: 1000 }, fact: 'Земля делает оборот вокруг Солнца примерно за 365,25 суток.', src: W('Год') },
+    { when: [/площад/, /казахстан/], num: { vals: [2724900], tol: 30000, min: 1e5, max: 1e8 }, fact: 'Площадь Казахстана — 2 724 900 км², 9-е место в мире.', src: W('Казахстан') },
+    { when: [/мозг/, /(10\s?%|десят[а-яa-z]* процент)/], myth: true, fact: 'Это миф. Томография показывает, что за сутки работают практически все отделы мозга.', src: W('Миф о десяти процентах мозга') },
+    { when: [/китайск[а-яa-z]* стен/, /(видн|увидеть|разглядеть)/, /(космос|луны|орбит)/], myth: true, fact: 'Это миф. Без оптики Великую Китайскую стену из космоса не видно: она слишком узкая.', src: W('Великая Китайская стена') },
+    { when: [/(золот[а-яa-z]* рыб|рыбк)/, /памят/, /секунд/], myth: true, fact: 'Это миф. Опыты показывают, что золотые рыбки помнят события месяцами.', src: W('Золотая рыбка') },
+    { when: [/молни/, /(дважды|два раза|в одно место)/, /(не бь|никогда)/], myth: true, fact: 'Это миф. Молния регулярно бьёт в одно и то же место, например в высокие здания.', src: W('Молния') },
+    { when: [/эйнштейн/, /математик/, /(двоечник|провалил|плохо|не давал)/], myth: true, fact: 'Это миф. Эйнштейн отлично знал математику ещё в школе.', src: W('Эйнштейн, Альберт') },
+    { when: [/эйнштейн/, /безуми/], myth: true, quote: true, fact: 'Нет документов, где Эйнштейн это говорил. Фразу приписывают ему с 1980-х годов.', src: 'https://quoteinvestigator.com/2017/03/23/same/' },
+  ];
+
+  function checkFacts(c) {
+    const out = [];
+    const ctx = c.ctx ? c.n + ' ' + c.ctx : c.n;
+    for (const f of FACTS) {
+      if (!f.when.every(r => r.test(ctx))) continue;
+      if (f.unless && f.unless.test(c.n)) continue;
+      let res = null, note = '';
+      if (f.myth) { res = 'contradict'; note = f.quote ? 'Ложная цитата' : 'Известный миф'; }
+      if (!res && f.wrong && f.wrong.test(c.n) && !(f.word && f.word.test(c.n))) { res = 'contradict'; note = 'Названо не то имя'; }
+      if (!res && f.word) {
+        if (f.word.test(c.n)) res = 'support';
+        else if (/(столиц|написал|автор|открыл|создал|перв)/.test(c.n)) { res = 'contradict'; note = 'Ответ отличается от факта'; }
+      }
+      if (f.year && res !== 'contradict') {
+        const ys = years(c.n);
+        if (ys.length) {
+          if (ys.some(y => f.year.includes(y))) res = res || 'support';
+          else { res = 'contradict'; note = `В ответе: ${ys.join(', ')}`; }
+        }
+      }
+      if (f.num && res !== 'contradict') {
+        const inRange = numbers(c.n).filter(x => x.v >= f.num.min && x.v <= f.num.max);
+        const cands = inRange.some(x => !x.isYear) ? inRange.filter(x => !x.isYear) : inRange;
+        if (cands.length) {
+          if (cands.some(x => f.num.vals.some(v => Math.abs(x.v - v) <= f.num.tol))) res = res || 'support';
+          else { res = 'contradict'; note = `В ответе: ${cands.map(x => x.raw).join(', ')}`; }
+        }
+      }
+      if (res) out.push({ src: 'База фактов', result: res, fact: f.fact, note, link: f.src });
+    }
+    return out;
+  }
+
+  /* ---------- 4. Arithmetic ---------- */
+  const num = s => parseFloat(s.replace(/\s/g, '').replace(',', '.'));
+  const close = (a, b) => Math.abs(a - b) <= Math.max(1e-9, Math.abs(b) * 0.005);
+  const fmt = v => (Math.round(v * 1000) / 1000).toString().replace('.', ',');
+  function checkMath(c) {
+    const out = [];
+    const t = c.n.replace(/−/g, '-');
+    const ar = /(-?\d+(?:[.,]\d+)?)\s*([+\-×*·\/÷]|\s[x:]\s)\s*(-?\d+(?:[.,]\d+)?)\s*(?:=|равно|равняется|будет)\s*(-?\d+(?:[.,]\d+)?)/g;
+    let m;
+    while ((m = ar.exec(t))) {
+      const a = num(m[1]), b = num(m[3]), got = num(m[4]), op = m[2].trim();
+      const want = op === '+' ? a + b : op === '-' ? a - b : '×*·x'.includes(op) ? a * b : a / b;
+      out.push(close(got, want)
+        ? { src: 'Математика', result: 'support', fact: `${m[1]} ${op} ${m[3]} = ${fmt(want)}. Вычисление верное.` }
+        : { src: 'Математика', result: 'contradict', fact: `${m[1]} ${op} ${m[3]} = ${fmt(want)}, а не ${m[4]}.`, note: 'Ошибка в вычислении' });
+    }
+    const pc = /(\d+(?:[.,]\d+)?)\s*%\s*от\s*(\d[\d ]*(?:[.,]\d+)?)\s*(?:—|–|-|=|:)?\s*(?:это|равно|составляет|будет)?\s*(?:—|–|-)?\s*(\d[\d ]*(?:[.,]\d+)?)/g;
+    while ((m = pc.exec(t))) {
+      const p = num(m[1]), base = num(m[2]), got = num(m[3]);
+      const want = base * p / 100;
+      out.push(close(got, want)
+        ? { src: 'Математика', result: 'support', fact: `${m[1]}% от ${m[2].trim()} = ${fmt(want)}. Вычисление верное.` }
+        : { src: 'Математика', result: 'contradict', fact: `${m[1]}% от ${m[2].trim()} = ${fmt(want)}, а не ${m[3].trim()}.`, note: 'Ошибка в процентах' });
+    }
+    return out;
+  }
+
+  /* ---------- 5. Hallucination signals ---------- */
+  const RX = {
+    source: /(исследовани|ученые|ученых|эксперт|по данным|согласно|опубликова|журнал|университет|институт|study|research|according to|scientists|report)/,
+    url: /(https?:\/\/\S+|www\.\S+)/,
+    doi: /10\.\d{4,9}\/[^\s,;)]+/,
+    absolute: /(^|[^а-я])(всегда|никогда|все без исключения|стопроцентно|100\s?%|доказано|доказали|безусловно|абсолютно|гарантирован[а-яa-z]*|точно известно|без сомнени[а-яa-z]*|единственн[а-яa-z]*)([^а-я]|$)/,
+    hedge: /(возможно|вероятно|по некоторым данным|считается|предположительно|может быть|не исключено|по оценкам|точных данных нет|не уверен)/,
+    quote: /[«"„][^»"“]{12,}[»"“]/,
+    quoteVerb: /(сказал|говорил|писал|заявил|цитат|произнес|слова)/,
+    fresh: /(сейчас|на данный момент|в этом году|в настоящее время|последн[а-яa-z]* (верси|данн|новост)|текущ[а-яa-z]*|недавно|на сегодня|свежи)/,
+    stakes: /(лекарств|дозиров|доз[аеуы]\b|мг\b|таблет|диагноз|лечени|симптом|болезн|антибиотик|закон[а-яa-z]*|стать[а-яa-z]* \d+|штраф|налог|инвест|кредит|вклад)/,
+    opinion: /(^|[^а-я])(я думаю|по-моему|мне кажется|на мой взгляд|лучше всего|рекомендую|советую|стоит|следует|нужно|важно|интересн[а-я]*|прекрасн[а-я]*|удивительн[а-я]*|лучш[а-я]*|худш[а-я]*|замечательн[а-я]*|рад помочь|надеюсь|вдохновля[а-я]*)([^а-я]|$)/,
+    factVerb: /(\s—\s|самы[йея]|сама[яе]|сам[оу]е|являет|был[аои]?\b|находит|состоит|открыл|изобрел|написал|родил|основан|построен|составляет|насчитыва|произошл|начал|закончил|вышл|вышел|расположен|равн|весит|длит)/,
+    future: /(прогноз|план|ожида|будет|планиру|к \d{4}|до \d{4}|станет|собираются)/,
+  };
+  const properNouns = (t, all) => {
+    const out = [];
+    const re = /(^|[^A-Za-zА-Яа-яЁё])([A-ZА-ЯЁ][a-zа-яё]{2,}(?:-[A-ZА-ЯЁ]?[a-zа-яё]+)?)/g;
+    let m, first = true;
+    while ((m = re.exec(t))) { if (all || !(first && m.index === 0)) out.push(m[2]); first = false; }
+    return out;
+  };
+
+  function signals(c) {
+    const s = [], n = c.n, nums = numbers(n);
+    const hasLink = RX.url.test(c.text), doi = c.text.match(RX.doi);
+    const precise = nums.filter(x => !x.isYear && (x.decimals || (/%/.test(n) && x.v % 5 !== 0) || (x.v > 1000 && x.v % 100 !== 0)));
+    const pct = /\d\s*%/.test(n);
+    if (RX.source.test(n) && !hasLink && !doi) {
+      if (pct || precise.length) s.push({ k: 'fake-stat', level: 'bad', title: 'Статистика со ссылкой «в никуда»', why: 'Упомянуто исследование или организация, но нет ссылки, авторов и названия работы. Так чаще всего выглядит выдуманная статистика.' });
+      else s.push({ k: 'vague-source', level: 'warn', title: 'Источник нельзя открыть', why: 'Ссылка на «исследования» или «экспертов» без названия и ссылки. Проверить такое утверждение по ответу невозможно.' });
+    }
+    if (doi) s.push({ k: 'doi', level: 'warn', title: 'DOI нужно открыть', why: 'ИИ часто придумывает правдоподобные DOI. Открой ссылку: если статьи нет или она о другом, утверждение выдумано.', link: 'https://doi.org/' + doi[0] });
+    for (const u of (c.text.match(/(https?:\/\/[^\s)»"]+|www\.[^\s)»"]+)/g) || [])) {
+      const r = SR.rateUrl(u.replace(/[.,;]+$/, ''));
+      if (r) s.push({ k: 'link-' + r.level, level: r.level === 'trusted' || r.level === 'media' ? 'info' : 'warn', title: 'Ссылка: ' + r.label.toLowerCase(), why: r.why, link: /^https?:/.test(u) ? u : 'https://' + u });
+    }
+    if (precise.length && !s.some(x => x.k === 'fake-stat')) s.push({ k: 'precise', level: 'warn', title: 'Очень точная цифра', why: `Цифра ${precise[0].raw} выглядит точно, но источник не указан. Модели часто генерируют правдоподобные числа.` });
+    if ((n.match(/\d+(?:[.,]\d+)?\s*%/g) || []).some(p => parseFloat(p) > 100)) s.push({ k: 'big-pct', level: 'warn', title: 'Процент больше 100', why: 'Рост «на 340%» и похожие цифры эффектно звучат, и потому их любят выдумывать. Нужен первоисточник.' });
+    if (RX.absolute.test(n)) s.push({ k: 'absolute', level: 'warn', title: 'Категоричность', why: 'Слова вроде «всегда», «доказано», «единственный» редко бывают точными. Настоящие источники обычно формулируют осторожнее.' });
+    if (RX.hedge.test(n)) s.push({ k: 'hedge', level: 'info', title: 'ИИ сам сомневается', why: 'Модель обозначила неуверенность. Это честно, но значит, что утверждение точно нужно проверить.' });
+    if (RX.quote.test(c.text) && (RX.quoteVerb.test(n) || properNouns(c.text).length)) s.push({ k: 'quote', level: 'warn', title: 'Цитата известного человека', why: 'ИИ часто приписывает цитаты не тем людям или сочиняет их. Ищи цитату с указанием книги, речи или письма.' });
+    const fut = years(n).filter(y => y > NOW_YEAR);
+    if (fut.length && !RX.future.test(n)) s.push({ k: 'future', level: 'bad', title: 'Дата из будущего', why: `Событие в ${fut[0]} году описано как уже произошедшее.` });
+    if (RX.fresh.test(n) && nums.length) s.push({ k: 'fresh', level: 'bad', title: 'Устаревшие данные', why: 'Ответ называет «текущее» значение. У модели есть дата среза знаний, и то, что для неё «сейчас», могло давно измениться.' });
+    else if (RX.fresh.test(n)) s.push({ k: 'fresh', level: 'warn', title: 'Свежие данные', why: 'У модели есть дата, после которой она ничего не знает. «Сейчас» для неё может быть год-два назад.' });
+    if (RX.stakes.test(n)) s.push({ k: 'stakes', level: 'warn', title: 'Высокая цена ошибки', why: 'Здоровье, деньги или закон. Сверь с официальным источником или специалистом, даже если ответ звучит уверенно.' });
+    return s;
+  }
+
+  function classify(c, sig) {
+    const n = c.n;
+    const hasNum = numbers(n).length > 0;
+    const names = properNouns(c.text).length;
+    const factual = hasNum || names > 0 || RX.factVerb.test(n) || sig.some(x => ['fake-stat','vague-source','doi','quote'].includes(x.k));
+    if (RX.opinion.test(n) && !hasNum && !sig.some(x => x.k === 'fake-stat')) return 'opinion';
+    if (!factual) return c.n.length < 60 || /\?$/.test(c.text) ? 'neutral' : 'factual-soft';
+    return 'factual';
+  }
+
+  /* ---------- 6. Internal contradictions ---------- */
+  const EVENTS = ['родил', 'умер', 'основ', 'открыл', 'изобрел', 'построен', 'полет', 'начал', 'закончил', 'вышл', 'вышел', 'опубликов', 'созда', 'открыт'];
+  function contradictions(claims) {
+    const info = claims.map(c => ({ ents: new Set(properNouns(c.text).map(w => norm(w).slice(0, 5))), ys: years(c.n), ev: EVENTS.filter(e => c.n.includes(e)) }));
+    for (let i = 0; i < claims.length; i++) for (let j = i + 1; j < claims.length; j++) {
+      const a = info[i], b = info[j];
+      if (!a.ys.length || !b.ys.length) continue;
+      if (![...a.ents].some(e => b.ents.has(e))) continue;
+      if (!a.ev.some(e => b.ev.includes(e))) continue;
+      if (a.ys.some(y => b.ys.includes(y))) continue;
+      const why = n => `В утверждении ${n} для того же события указан другой год. Ответ противоречит сам себе, значит минимум одна дата неверна.`;
+      claims[i].sig.push({ k: 'self', level: 'bad', title: 'Противоречит сам себе', why: why(j + 1) });
+      claims[j].sig.push({ k: 'self', level: 'bad', title: 'Противоречит сам себе', why: why(i + 1) });
+    }
+  }
+
+  /* ---------- 7. Verdict and explanation ---------- */
+  const VERDICTS = {
+    ok: { label: 'Подтверждено', short: 'Верно', w: 1 },
+    bad: { label: 'Ошибка', short: 'Ошибка', w: 0 },
+    risk: { label: 'Похоже на выдумку', short: 'Выдумка?', w: 0.25 },
+    check: { label: 'Проверь сам', short: 'Проверить', w: 0.6 },
+    opinion: { label: 'Мнение или совет', short: 'Мнение', w: null },
+    neutral: { label: 'Не требует проверки', short: 'Нейтрально', w: null },
+  };
+
+  function searchLinks(c) {
+    const ru = /[а-яё]/i.test(c.text);
+    const q = c.text.replace(/\s+/g, ' ').slice(0, 140);
+    const names = properNouns(c.text);
+    const links = [{ label: 'Найти в Google', url: 'https://www.google.com/search?q=' + encodeURIComponent(q) }];
+    links.push({ label: 'Поиск в Википедии', url: `https://${ru ? 'ru' : 'en'}.wikipedia.org/w/index.php?search=` + encodeURIComponent((names.join(' ') || q).slice(0, 100)) });
+    if (c.sig.some(s => ['fake-stat', 'vague-source', 'doi', 'precise', 'big-pct'].includes(s.k))) links.push({ label: 'Google Scholar', url: 'https://scholar.google.com/scholar?q=' + encodeURIComponent(q) });
+    if (c.sig.some(s => s.k === 'quote')) links.push({ label: 'Проверить цитату', url: 'https://www.google.com/search?q=' + encodeURIComponent('"' + (c.text.match(/[«"„]([^»"“]+)/) || [,''])[1].slice(0, 80) + '" источник цитаты') });
+    const doi = c.sig.find(s => s.k === 'doi'); if (doi) links.push({ label: 'Открыть DOI', url: doi.link });
+    return links;
+  }
+
+  function decide(c) {
+    const con = c.checks.filter(x => x.result === 'contradict');
+    const sup = c.checks.filter(x => x.result === 'support');
+    const bad = c.sig.filter(s => s.level === 'bad');
+    const warn = c.sig.filter(s => s.level === 'warn');
+    let v;
+    if (con.length) v = c.checks.some(x => x.result === 'contradict' && x.partly) && !c.checks.some(x => x.result === 'contradict' && !x.partly) ? 'risk' : 'bad';
+    else if (sup.length && !bad.length) v = 'ok';
+    else if (c.type === 'opinion') v = 'opinion';
+    else if (c.type === 'neutral') v = 'neutral';
+    else if (bad.length || warn.length >= 2) v = 'risk';
+    else v = 'check';
+
+    const why = [];
+    if (v === 'bad') con.forEach(x => why.push((x.note ? x.note + '. ' : '') + x.fact));
+    if (v === 'ok') sup.forEach(x => why.push('Совпадает с проверенным источником: ' + x.fact));
+    if (v === 'risk' && con.length) con.forEach(x => why.push(x.fact));
+    c.sig.filter(s => s.level !== 'info' || v !== 'ok' || s.k.startsWith('link')).forEach(s => why.push(s.title + '. ' + s.why));
+    if (v === 'check' && !why.length) why.push(c.type === 'factual-soft'
+      ? 'Это общее утверждение. Звучит правдоподобно, но ответ ИИ сам по себе не источник.'
+      : 'Это проверяемый факт. Мы не нашли ни подтверждения, ни признаков ошибки, поэтому он требует ручной проверки.');
+    if (v === 'opinion') why.unshift('Это оценка или совет, а не факт. Её нельзя подтвердить или опровергнуть, можно только сравнить с мнением специалистов.');
+    if (v === 'neutral') why.unshift('В этой фразе нет фактов, которые нужно проверять.');
+
+    const how = [];
+    if (v === 'ok') how.push('Факт подтверждён. Для важной работы всё равно укажи первоисточник, а не ИИ.');
+    if (v === 'bad') how.push('Не используй это утверждение. Исправь по источнику ниже.');
+    if (v === 'risk' || v === 'check') {
+      if (c.sig.some(s => ['fake-stat', 'vague-source', 'doi'].includes(s.k))) how.push('Найди само исследование: автор, год, название журнала. Если его нет в Google Scholar, считай цифру выдуманной.');
+      if (c.sig.some(s => s.k === 'quote')) how.push('Ищи цитату с указанием первоисточника: книги, речи, письма. Сайты с подборками цитат не считаются.');
+      if (c.sig.some(s => s.k === 'stakes')) how.push('Сверь с официальным сайтом (Минздрав, закон, банк) или спроси специалиста.');
+      if (c.sig.some(s => s.k === 'fresh')) how.push('Проверь дату: найди новость или официальный источник за последние месяцы.');
+      how.push('Найди минимум два независимых источника, которые говорят то же самое.');
+    }
+    c.verdict = v; c.why = why; c.how = how; c.links = (v === 'neutral' || v === 'opinion') ? [] : searchLinks(c);
+    c.sources = v === 'neutral' || (v === 'opinion' && !SR.topics(c.text).some(t => ['health', 'money', 'law'].includes(t.id))) ? null : SR.forClaim(c.text, 4, c.ctx || '');
+  }
+
+  function score(claims) {
+    const fact = claims.filter(c => VERDICTS[c.verdict].w !== null);
+    const counts = Object.fromEntries(Object.keys(VERDICTS).map(k => [k, claims.filter(c => c.verdict === k).length]));
+    if (!fact.length) return { value: null, counts, level: 'none' };
+    let v = 100 * fact.reduce((a, c) => a + VERDICTS[c.verdict].w, 0) / fact.length;
+    const abs = claims.filter(c => c.sig.some(s => s.k === 'absolute')).length;
+    v -= Math.min(10, abs * 4);
+    if (counts.bad) v = Math.min(v, 60 - Math.min(25, (counts.bad - 1) * 10));
+    v = Math.max(0, Math.min(100, Math.round(v)));
+    const level = v >= 80 ? 'high' : v >= 55 ? 'mid' : 'low';
+    return { value: v, counts, level };
+  }
+
+  function analyze(text) {
+    const claims = splitClaims(text);
+    claims.forEach((c, i) => {
+      if (i && /(^|[^а-я])(он|она|оно|они|его|ее|их|страна|страны|стране|страну|город|здесь|там|этот|эта|этого|этой)([^а-я]|$)/.test(c.n))
+        c.ctx = norm(properNouns(claims[i - 1].text, true).join(' ') + ' ' + (claims[i - 1].ctx || ''));
+    });
+    claims.forEach(c => { c.sig = signals(c); c.checks = [...checkFacts(c), ...checkMath(c)]; });
+    contradictions(claims);
+    claims.forEach(c => { c.type = classify(c, c.sig); decide(c); });
+    return { claims, score: score(claims) };
+  }
+
+  /* re-run verdicts after external checks (Wikipedia, AI) were added */
+  function refresh(result) {
+    result.claims.forEach(decide);
+    result.score = score(result.claims);
+    return result;
+  }
+
+  return { analyze, refresh, numbers, years, properNouns, norm, VERDICTS, FACTS, NOW_YEAR };
+})();
+if (typeof module !== 'undefined') module.exports = TL;
+</script>
+<script>const EXAMPLES = [
+  {
+    title: 'Доклад про космос',
+    q: 'Расскажи коротко об истории освоения космоса для доклада.',
+    text: `Освоение космоса началось в середине XX века. Юрий Гагарин совершил первый полёт человека в космос 12 апреля 1965 года на корабле «Восток-1». Во время полёта он сделал три витка вокруг Земли. Первой женщиной в космосе стала Валентина Терешкова в 1963 году. Нил Армстронг ступил на Луну в 1969 году. Луна находится на расстоянии около 384 400 км от Земли. По данным исследования NASA, 73,4% космонавтов испытывают проблемы со сном в первые сутки полёта. Кстати, Великую Китайскую стену хорошо видно из космоса невооружённым глазом. Я думаю, это самое вдохновляющее достижение человечества.`,
+  },
+  {
+    title: 'Домашка по науке',
+    q: 'Помоги с домашним заданием по физике и биологии.',
+    text: `Вода кипит при 90 °C при нормальном атмосферном давлении.
+Скорость света в вакууме около 300 000 км/с.
+В Солнечной системе 9 планет.
+У взрослого человека 206 костей.
+15% от 200 — это 45.
+Согласно статье в журнале Nature (doi:10.1038/s41586-2021-77777), школьники, которые учатся с ИИ, запоминают материал на 340% лучше.
+Учёные доказали, что человек использует только 10% мозга.`,
+  },
+  {
+    title: 'Честный ответ',
+    q: 'Какая столица у Казахстана и когда он стал независимым?',
+    text: `Столица Казахстана — Астана. Казахстан провозгласил независимость 16 декабря 1991 года. Площадь страны составляет 2 724 900 км², это девятое место в мире. Точную численность населения лучше уточнить на сайте Бюро национальной статистики: данные обновляются каждый год.`,
+  },
+];
+
+const TRAINER = [
+  {
+    topic: 'История космоса',
+    items: [
+      { t: 'Юрий Гагарин совершил первый полёт человека в космос 12 апреля 1961 года.', ok: true, e: 'Верно. Это легко проверить в любой энциклопедии.' },
+      { t: 'Полёт корабля «Восток-1» длился 108 минут.', ok: true, e: 'Верно, 108 минут от старта до приземления.' },
+      { t: 'Во время полёта Гагарин сделал три витка вокруг Земли.', ok: false, e: 'Виток был один. ИИ любит добавлять правдоподобные детали к верным фактам.', tip: 'Лишняя деталь' },
+      { t: 'Через месяц после полёта Гагарин первым вышел в открытый космос.', ok: false, e: 'В открытый космос первым вышел Алексей Леонов в 1965 году. ИИ склеил два разных события.', tip: 'Склейка фактов' },
+    ],
+  },
+  {
+    topic: 'Биология',
+    items: [
+      { t: 'У взрослого человека 206 костей.', ok: true, e: 'Верно.' },
+      { t: 'Исследование Стэнфордского университета 2019 года показало, что 87% людей используют только 10% мозга.', ok: false, e: 'Это миф, а «исследование» выдумано: нет авторов, названия и ссылки. Точная цифра делает ложь убедительнее.', tip: 'Выдуманный источник' },
+      { t: 'Кислород в крови переносит гемоглобин, который находится в эритроцитах.', ok: true, e: 'Верно.' },
+      { t: 'Сердце человека состоит из четырёх камер.', ok: true, e: 'Верно: два предсердия и два желудочка.' },
+    ],
+  },
+  {
+    topic: 'География',
+    items: [
+      { t: 'Эверест — самая высокая гора над уровнем моря, её высота 8849 метров.', ok: true, e: 'Верно, это данные измерения 2020 года.' },
+      { t: 'Столица Австралии — Сидней.', ok: false, e: 'Столица Австралии — Канберра. Сидней просто самый известный город, и ИИ путает «самое известное» с «правильным».', tip: 'Популярное вместо верного' },
+      { t: 'Байкал — самое глубокое озеро в мире.', ok: true, e: 'Верно, его глубина 1642 м.' },
+      { t: 'Амазонка протекает по территории Бразилии.', ok: true, e: 'Верно.' },
+    ],
+  },
+  {
+    topic: 'Литература и цитаты',
+    items: [
+      { t: 'Роман «Война и мир» написал Лев Толстой.', ok: true, e: 'Верно.' },
+      { t: 'Альберт Эйнштейн говорил: «Безумие — это делать одно и то же и ждать другого результата».', ok: false, e: 'Нет ни одного документа, где Эйнштейн это сказал. Цитаты известных людей ИИ часто приписывает наугад.', tip: 'Чужая цитата' },
+      { t: 'Первая книга о Гарри Поттере вышла в 1997 году.', ok: true, e: 'Верно.' },
+      { t: 'Книгу «Маленький принц» написал Жюль Верн в 1943 году.', ok: false, e: 'Год верный, а автор нет: это Антуан де Сент-Экзюпери. Полуправда опаснее лжи, потому что верная часть усыпляет внимание.', tip: 'Полуправда' },
+    ],
+  },
+  {
+    topic: 'Наука и расчёты',
+    items: [
+      { t: 'Вода кипит при 100 °C при нормальном атмосферном давлении.', ok: true, e: 'Верно.' },
+      { t: '15% от 200 — это 45.', ok: false, e: '15% от 200 = 30. Языковые модели предсказывают слова, а не считают, поэтому ошибаются в арифметике.', tip: 'Ошибка в расчёте' },
+      { t: 'Согласно статье в Nature (doi:10.1038/fake-2021-777), дети с ИИ учатся на 340% быстрее.', ok: false, e: 'DOI не существует, а «340%» слишком эффектно для науки. Если ссылку нельзя открыть, её нет.', tip: 'Фальшивая ссылка' },
+      { t: 'Скорость света в вакууме около 300 000 км/с.', ok: true, e: 'Верно, точнее 299 792 км/с.' },
+    ],
+  },
+  {
+    topic: 'Технологии',
+    items: [
+      { t: 'ChatGPT компания OpenAI представила в ноябре 2022 года.', ok: true, e: 'Верно.' },
+      { t: 'Интернет изобрёл Билл Гейтс в 1975 году.', ok: false, e: 'Интернет вырос из сети ARPANET, протоколы разработали Серф и Кан. Гейтс в 1975 году основал Microsoft. ИИ связал известное имя с известным словом.', tip: 'Знаменитое имя' },
+      { t: 'Первый iPhone представили в 2007 году.', ok: true, e: 'Верно.' },
+      { t: 'Сейчас последняя версия iOS — 12.', ok: false, e: 'Это давно не так. У модели есть дата среза знаний, и «сейчас» для неё может быть в прошлом.', tip: 'Устаревшие данные' },
+    ],
+  },
+];
+if (typeof module !== 'undefined') module.exports = EXAMPLES; if (typeof module !== 'undefined') module.exports.TRAINER = TRAINER;
+</script>
+<script>(() => {
+  const $ = s => document.querySelector(s);
+  const esc = s => String(s).replace(/[&<>"]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
+  const store = {
+    get(k) { try { return localStorage.getItem(k); } catch { return null; } },
+    set(k, v) { try { v == null ? localStorage.removeItem(k) : localStorage.setItem(k, v); } catch {} },
+  };
+  const toast = msg => { const t = document.createElement('div'); t.className = 'toast'; t.textContent = msg; document.body.appendChild(t); setTimeout(() => t.remove(), 2200); };
+  async function copy(text) {
+    try { await navigator.clipboard.writeText(text); toast('Скопировано'); }
+    catch { const ta = document.createElement('textarea'); ta.value = text; document.body.appendChild(ta); ta.select(); try { document.execCommand('copy'); toast('Скопировано'); } catch { toast('Выдели текст и скопируй вручную'); } ta.remove(); }
+  }
+
+  /* ---------- tabs ---------- */
+  function showTab(name) {
+    document.querySelectorAll('.tab').forEach(b => b.setAttribute('aria-selected', b.dataset.tab === name));
+    ['check', 'train', 'sources', 'how'].forEach(t => $('#tab-' + t).hidden = t !== name);
+    store.set('tl-tab', name);
+    if (name === 'train' && !$('#train').children.length) Trainer.render();
+    if (name === 'sources' && !$('#catalog').children.length) renderCatalog();
+  }
+  document.querySelectorAll('.tab').forEach(b => b.onclick = () => showTab(b.dataset.tab));
+
+  /* ---------- engines state ---------- */
+  const eng = { wiki: 'wait' };
+  function renderEngines() {
+    const row = (st, name, msg) => `<div class="eng"><i class="dot ${st}"></i><span><b>${name}</b> <span class="m">${msg}</span></span></div>`;
+    const wikiMsg = { on: 'сверяем числа и даты', off: 'откроется в полной версии сайта', wait: 'проверяем доступ…' }[eng.wiki];
+    $('#engines').innerHTML = row('on', 'База фактов', `${TL.FACTS.length} проверенных фактов`) + row('on', 'Математика', 'пересчёт вычислений и процентов') + row('on', 'Признаки выдумки', '10 сигналов и проверка ссылок') + row('on', 'Надёжные источники', `${Object.keys(SRC.S).length} проверенных сайтов по ${SRC.TOPICS.length} темам`) + row(eng.wiki, 'Википедия', wikiMsg);
+  }
+
+  async function detectWiki() {
+    try {
+      const ctl = new AbortController(); const t = setTimeout(() => ctl.abort(), 4000);
+      const r = await fetch('https://ru.wikipedia.org/w/api.php?action=query&meta=siteinfo&format=json&origin=*', { signal: ctl.signal });
+      clearTimeout(t); eng.wiki = r.ok ? 'on' : 'off';
+    } catch { eng.wiki = 'off'; }
+    renderEngines();
+    if (eng.wiki === 'on' && state.result) runWiki();
+  }
+  /* ---------- analysis ---------- */
+  const state = { result: null, text: '', filter: 'all', active: null, busy: '' };
+
+  function run() {
+    const text = $('#answer').value.trim();
+    if (!text) { state.result = null; renderReport(); return; }
+    state.text = $('#answer').value;
+    state.result = TL.analyze(state.text);
+    state.active = null;
+    store.set('tl-draft', state.text);
+    saveHistory(state.text, $('#q').value, state.result.score.value);
+    renderReport();
+    renderEngines();
+    if (eng.wiki === 'on') runWiki();
+  }
+
+  /* history of checks, kept only in this browser */
+  function getHistory() { try { return JSON.parse(store.get('tl-hist') || '[]'); } catch { return []; } }
+  function saveHistory(text, q, score) {
+    const h = getHistory().filter(x => x.text !== text);
+    h.unshift({ text, q, score, at: Date.now() });
+    store.set('tl-hist', JSON.stringify(h.slice(0, 8)));
+    renderHistory();
+  }
+  function renderHistory() {
+    const h = getHistory(), el = $('#history');
+    if (!h.length) { el.hidden = true; return; }
+    el.hidden = false;
+    el.innerHTML = `<span class="lbl">Недавние проверки</span><div class="hist">${h.map((x, i) => `<button type="button" class="hitem" data-h="${i}"><b class="hs ${x.score == null ? '' : x.score >= 80 ? 'high' : x.score >= 55 ? 'mid' : 'low'}">${x.score ?? '–'}</b><span>${esc(x.text.replace(/\s+/g, ' ').slice(0, 70))}…</span><time>${new Date(x.at).toLocaleDateString('ru-RU', { day: 'numeric', month: 'short' })}</time></button>`).join('')}</div><button type="button" class="linkbtn" id="clearHist">Очистить историю</button>`;
+    el.querySelectorAll('[data-h]').forEach(b => b.onclick = () => { const x = h[+b.dataset.h]; $('#answer').value = x.text; $('#q').value = x.q || ''; renderExamples(-1); run(); });
+    $('#clearHist').onclick = () => { store.set('tl-hist', null); renderHistory(); };
+  }
+
+  /* Wikipedia: confirm numbers and dates that local checks could not */
+  const wikiCache = new Map();
+  async function wikiFetch(url) {
+    if (wikiCache.has(url)) return wikiCache.get(url);
+    const ctl = new AbortController(); const t = setTimeout(() => ctl.abort(), 7000);
+    const p = fetch(url, { signal: ctl.signal }).then(r => r.json()).finally(() => clearTimeout(t));
+    wikiCache.set(url, p); return p;
+  }
+  function variants(x) {
+    const r = TL.norm(x.raw), out = new Set([r, r.replace(/ /g, ''), r.replace(',', '.'), r.replace('.', ',')]);
+    if (x.v >= 1000 && Number.isInteger(x.v) && x.v < 1e7 && !x.isYear) out.add(x.v.toLocaleString('ru-RU').replace(/ /g, ' '));
+    return [...out].filter(v => v.length >= 2);
+  }
+  function snippet(text, needle) {
+    const i = text.toLowerCase().indexOf(needle); if (i < 0) return '';
+    const s = Math.max(text.lastIndexOf('. ', i) + 2, i - 160), e = text.indexOf('.', i + needle.length);
+    return text.slice(s, e < 0 ? i + 160 : Math.min(e + 1, i + 220)).trim();
+  }
+  async function runWiki() {
+    const res = state.result; if (!res) return;
+    const todo = res.claims.filter(c => !c.wikiDone && ['check', 'risk'].includes(c.verdict) && !c.checks.length && TL.numbers(c.n).some(x => x.v >= 10));
+    if (!todo.length) return;
+    state.busy = 'wiki'; renderReport();
+    await Promise.all(todo.slice(0, 8).map(async c => {
+      c.wikiDone = true;
+      let names = TL.properNouns(c.text); if (!names.length) names = TL.properNouns(c.text, true).slice(0, 1);
+      if (c.ctx) names = names.concat(c.ctx.split(' ').filter(Boolean).slice(0, 2));
+      if (!names.length) return;
+      const lang = /[а-яё]/i.test(c.text) ? 'ru' : 'en';
+      const url = `https://${lang}.wikipedia.org/w/api.php?action=query&format=json&origin=*&generator=search&gsrlimit=1&gsrsearch=${encodeURIComponent(names.slice(0, 3).join(' '))}&prop=extracts|info&inprop=url&explaintext=1`;
+      try {
+        const j = await wikiFetch(url);
+        const page = Object.values((j.query && j.query.pages) || {})[0]; if (!page || !page.extract) return;
+        const ext = TL.norm(page.extract).replace(/[  ]/g, ' ');
+        const nums = TL.numbers(c.n).filter(x => x.v >= 10);
+        const found = nums.filter(x => variants(x).some(v => ext.includes(v)));
+        if (found.length === nums.length) {
+          const sn = snippet(page.extract.replace(/[  ]/g, ' '), variants(found[0]).find(v => ext.includes(v)));
+          c.checks.push({ src: 'Википедия', result: 'support', fact: `В статье «${page.title}» те же цифры${sn ? ': «' + sn + '»' : '.'}`, link: page.fullurl });
+        } else if (!found.length) {
+          c.sig.push({ k: 'wiki-miss', level: 'warn', title: 'Не нашли цифры в Википедии', why: `В статье «${page.title}» нет чисел ${nums.map(x => x.raw).join(', ')}. Это не доказывает ошибку, но повод проверить.`, link: page.fullurl });
+        }
+      } catch {}
+    }));
+    TL.refresh(res); state.busy = ''; renderReport();
+  }
+
+  /* ---------- report rendering ---------- */
+  const COLORS = { ok: 'var(--ok)', bad: 'var(--bad)', risk: 'var(--risk)', check: 'var(--check)', opinion: 'var(--opinion)', neutral: 'var(--neutral)' };
+  const LEVEL = {
+    high: ['Можно доверять, но выборочно', 'Ключевые факты подтверждены. Перед использованием проверь пункты с жёлтой меткой.'],
+    mid: ['Доверяй осторожно', 'Часть утверждений не подтверждена или похожа на выдумку. Используй только проверенные пункты.'],
+    low: ['Не доверяй без проверки', 'В ответе есть ошибки или сильные признаки выдумки. Не копируй его в работу как есть.'],
+    none: ['Нечего проверять', 'В тексте нет фактических утверждений: только мнения и общие фразы.'],
+  };
+
+  function renderReport() {
+    const el = $('#report'), res = state.result;
+    if (!res) { el.innerHTML = `<div class="panel empty">Вставь ответ ИИ слева или выбери пример, и здесь появится разбор.</div>`; return; }
+    const { value, counts, level } = res.score;
+    const total = res.claims.length;
+    const C = 2 * Math.PI * 54, ring = value == null ? 0 : C * value / 100;
+    const gcol = level === 'high' ? 'var(--ok)' : level === 'mid' ? 'var(--risk)' : level === 'low' ? 'var(--bad)' : 'var(--neutral)';
+    const order = ['ok', 'check', 'risk', 'bad', 'opinion', 'neutral'];
+    const busy = state.busy ? `<p class="note"><span class="spin"></span> Сверяем числа и даты с Википедией…</p>` : '';
+
+    let marked = '', pos = 0;
+    for (const c of res.claims) {
+      marked += esc(state.text.slice(pos, c.start));
+      marked += `<span class="m v-${c.verdict}${state.active === c.id ? ' active' : ''}" data-id="${c.id}" title="${esc(TL.VERDICTS[c.verdict].label)}"><sup>${c.id}</sup>${esc(state.text.slice(c.start, c.end))}</span>`;
+      pos = c.end;
+    }
+    marked += esc(state.text.slice(pos));
+
+    const F = { all: ['Все', () => true], problems: ['Ошибки и риски', c => ['bad', 'risk'].includes(c.verdict)], check: ['Проверить', c => c.verdict === 'check'], ok: ['Верно', c => c.verdict === 'ok'] };
+    const shown = res.claims.filter(F[state.filter][1]);
+
+    el.innerHTML = `
+      <div class="panel summary">
+        <div class="gauge" role="img" aria-label="Индекс доверия ${value ?? 'нет'} из 100">
+          <svg viewBox="0 0 132 132"><circle cx="66" cy="66" r="54" fill="none" stroke="var(--surface-2)" stroke-width="12"/><circle cx="66" cy="66" r="54" fill="none" stroke="${gcol}" stroke-width="12" stroke-linecap="round" stroke-dasharray="${ring} ${C}"/></svg>
+          <div class="val"><div><b>${value ?? '–'}</b><small>доверие</small></div></div>
+        </div>
+        <div class="verdict">
+          <h2>${LEVEL[level][0]}</h2>
+          <p>${LEVEL[level][1]}</p>
+          <div class="bar">${order.map(k => counts[k] ? `<i style="width:${100 * counts[k] / total}%;background:${COLORS[k]}"></i>` : '').join('')}</div>
+          <div class="legend">${order.filter(k => counts[k]).map(k => `<span><i style="background:${COLORS[k]}"></i>${TL.VERDICTS[k].label}: ${counts[k]}</span>`).join('')}</div>
+          ${busy}
+        </div>
+      </div>
+      <div class="panel sec">
+        <h3>Разметка ответа <span class="note">нажми на фразу, чтобы увидеть объяснение</span></h3>
+        <div class="marked" id="marked">${marked}</div>
+      </div>
+      <div class="panel sec">
+        <h3>Утверждения: ${total}
+          <span class="filters">${Object.entries(F).map(([k, [l]]) => `<button type="button" class="chip" data-f="${k}" aria-pressed="${state.filter === k}">${l}</button>`).join('')}</span>
+        </h3>
+        <div class="claims">${shown.map(claimCard).join('') || '<p class="note">Нет утверждений в этой группе.</p>'}</div>
+      </div>
+      ${biblioBlock(res)}
+      ${recheckBlock(res)}
+      <div class="actions"><button class="btn" type="button" id="copyReport">Скопировать отчёт</button></div>`;
+
+    el.querySelectorAll('.m').forEach(m => m.onclick = () => focusClaim(+m.dataset.id));
+    el.querySelectorAll('[data-f]').forEach(b => b.onclick = () => { state.filter = b.dataset.f; renderReport(); });
+    const cp = $('#copyPrompt'); if (cp) cp.onclick = () => copy($('#recheck').textContent);
+    const cb = $('#copyBib'); if (cb) cb.onclick = () => copy($('#bib').innerText);
+    $('#copyReport').onclick = () => copy(reportText(res));
+  }
+
+  function claimCard(c) {
+    const V = TL.VERDICTS[c.verdict];
+    const srcs = [...new Set(c.checks.map(x => x.src))];
+    const conflict = c.checks.some(x => x.result === 'support') && c.checks.some(x => x.result === 'contradict');
+    const tags = srcs.map(s => `<span class="src">${esc(s)}</span>`).join('') + (c.sig.length ? '<span class="src">Признаки в тексте</span>' : '') + (conflict ? '<span class="src conflict">Источники расходятся</span>' : '');
+    const fix = c.checks.find(x => x.fix);
+    const links = c.links.concat(c.checks.filter(x => x.link).map(x => ({ label: 'Источник: ' + x.src, url: x.link })), c.sig.filter(s => s.link && s.k !== 'doi').map(s => ({ label: 'Открыть статью', url: s.link })));
+    const uniq = [...new Map(links.map(l => [l.url, l])).values()];
+    return `<article class="claim v-${c.verdict}${state.active === c.id ? ' active' : ''}" id="claim-${c.id}">
+      <header><span class="n">#${c.id}</span><span class="pill">${V.label}</span>${tags}</header>
+      <p class="ct">${esc(c.text)}</p>
+      <h4>Почему</h4><ul>${c.why.map(w => `<li>${esc(w)}</li>`).join('')}</ul>
+      ${fix ? `<div class="fix"><b>Как правильно:</b> ${esc(fix.fix)}</div>` : ''}
+      ${c.how.length ? `<h4>Как проверить</h4><ul>${c.how.map(w => `<li>${esc(w)}</li>`).join('')}</ul>` : ''}
+      ${c.sources ? `<h4>Где проверить надёжно${c.sources.topics.length ? ': ' + esc(c.sources.topics.join(', ').toLowerCase()) : ''}</h4><div class="trusted">${c.sources.items.map(x => `<a href="${esc(x.link)}" target="_blank" rel="noopener" title="${esc(x.why)}"><b>${esc(x.name)}</b><small>${esc(x.domain)}</small></a>`).join('')}</div>` : ''}
+      ${uniq.length ? `<h4>Быстрый поиск</h4><div class="links">${uniq.map(l => `<a href="${esc(l.url)}" target="_blank" rel="noopener">${esc(l.label)} ↗</a>`).join('')}</div>` : ''}
+    </article>`;
+  }
+
+  function focusClaim(id) {
+    state.active = id;
+    if (state.filter !== 'all' && !document.getElementById('claim-' + id)) state.filter = 'all';
+    renderReport();
+    const el = document.getElementById('claim-' + id);
+    if (el) el.scrollIntoView({ behavior: matchMedia('(prefers-reduced-motion: reduce)').matches ? 'auto' : 'smooth', block: 'center' });
+  }
+
+  function bibList(res) {
+    const seen = new Map();
+    res.claims.forEach(c => c.checks.forEach(x => {
+      if (!x.link || seen.has(x.link)) return;
+      let title = '';
+      const m = decodeURIComponent(x.link).match(/wiki\/(.+)$/); if (m) title = m[1].replace(/_/g, ' ');
+      const t = x.fact && x.fact.match(/статье «([^»]+)»/); if (t) title = t[1];
+      seen.set(x.link, { title: title || x.link.replace(/^https?:\/\//, '').split('/')[0], site: x.link.includes('wikipedia') ? 'Википедия' : x.link.replace(/^https?:\/\/(www\.)?/, '').split('/')[0], url: x.link, ids: [c.id] });
+    }));
+    return [...seen.values()];
+  }
+  function biblioBlock(res) {
+    const list = bibList(res);
+    if (!list.length) return '';
+    const d = new Date().toLocaleDateString('ru-RU');
+    return `<div class="panel sec">
+      <h3>Список источников для твоей работы <button type="button" class="chip" id="copyBib">Скопировать список</button></h3>
+      <p class="note">Источники, по которым мы проверили факты. Оформлены по правилам для ссылок на электронные ресурсы, можно вставить в доклад вместо «ответ ИИ».</p>
+      <ol class="bib" id="bib">${list.map(x => `<li>${esc(x.title)} // ${esc(x.site)}. URL: <a href="${esc(x.url)}" target="_blank" rel="noopener">${esc((() => { try { return decodeURI(x.url); } catch { return x.url; } })())}</a> (дата обращения: ${d}).</li>`).join('')}</ol>
+    </div>`;
+  }
+
+  /* catalogue of trusted sources */
+  function renderCatalog() {
+    const groups = {};
+    Object.values(SRC.S).forEach(x => (groups[x.kind] = groups[x.kind] || []).push(x));
+    $('#catalog').innerHTML = Object.entries(groups).map(([k, arr]) => `<div class="panel cat"><h3>${esc(k)}</h3>${arr.map(x => `<a class="srcrow" href="${esc(x.home)}" target="_blank" rel="noopener"><b>${esc(x.name)}</b><small>${esc(x.domain)}</small><span>${esc(x.why)}</span></a>`).join('')}</div>`).join('');
+  }
+  const catSearch = () => {
+    const q = $('#srcq').value.trim(); if (!q) return;
+    const r = SRC.forClaim(q, 6);
+    $('#srcres').innerHTML = `<p class="note">${r.topics.length ? 'Тема: ' + esc(r.topics.join(', ')) : 'Тема не определилась, вот универсальные источники'}</p><div class="trusted">${r.items.map(x => `<a href="${esc(x.link)}" target="_blank" rel="noopener" title="${esc(x.why)}"><b>${esc(x.name)}</b><small>${esc(x.domain)}</small></a>`).join('')}</div>`;
+  };
+  $('#srcForm').onsubmit = e => { e.preventDefault(); catSearch(); };
+
+  function recheckBlock(res) {
+    const flagged = res.claims.filter(c => ['bad', 'risk', 'check'].includes(c.verdict));
+    if (!flagged.length) return '';
+    const txt = `Перепроверь утверждения из своего ответа. Для каждого напиши:
+1) насколько ты уверен, от 0 до 100%;
+2) на какой конкретный источник опираешься: автор, название, год (не придумывай, если не знаешь, так и скажи);
+3) что в утверждении может быть неточным.
+
+${flagged.map((c, i) => `${i + 1}. ${c.text}`).join('\n')}`;
+    return `<div class="panel sec">
+      <h3>Попроси ИИ перепроверить себя <button type="button" class="chip" id="copyPrompt">Скопировать запрос</button></h3>
+      <p class="note">Вставь этот запрос в тот же чат с ИИ. Если модель не может назвать источник или меняет ответ, утверждению доверять нельзя.</p>
+      <div class="prompt-box" id="recheck">${esc(txt)}</div>
+    </div>`;
+  }
+
+  function reportText(res) {
+    const s = res.score;
+    return `TrustLens: индекс доверия ${s.value ?? '–'}/100 (${LEVEL[s.level][0]})\n\n` + res.claims.map(c => `[${TL.VERDICTS[c.verdict].label}] ${c.text}\n  Почему: ${c.why[0] || ''}`).join('\n\n');
+  }
+
+  /* ---------- input ---------- */
+  function renderExamples(active) {
+    $('#examples').innerHTML = EXAMPLES.map((e, i) => `<button type="button" class="chip" data-ex="${i}" aria-pressed="${active === i}">${esc(e.title)}</button>`).join('');
+    document.querySelectorAll('[data-ex]').forEach(b => b.onclick = () => loadExample(+b.dataset.ex));
+  }
+  function loadExample(i) {
+    $('#q').value = EXAMPLES[i].q; $('#answer').value = EXAMPLES[i].text;
+    renderExamples(i); run();
+  }
+  $('#form').onsubmit = e => { e.preventDefault(); renderExamples(-1); run(); };
+
+  /* ---------- trainer ---------- */
+  const Trainer = {
+    round: 0, picked: new Set(), revealed: false, score: 0, max: 0, caught: 0, falseAlarms: 0, tips: new Set(),
+    render() {
+      const el = $('#train');
+      if (this.round >= TRAINER.length) return this.final(el);
+      const r = TRAINER[this.round];
+      el.innerHTML = `<div class="panel">
+        <div class="round-head"><h2>${esc(r.topic)}</h2><span class="scoreline">Раунд ${this.round + 1} из ${TRAINER.length} · очки ${this.score}/${this.max}</span></div>
+        <div class="progress" aria-hidden="true">${TRAINER.map((_, i) => `<i class="${i < this.round ? 'done' : ''}"></i>`).join('')}</div>
+        <p class="note">Так ответил ИИ. ${this.revealed ? 'Вот разбор.' : 'Отметь утверждения, которые считаешь ошибкой.'}</p>
+        <div class="stmt">${r.items.map((it, i) => {
+          const p = this.picked.has(i);
+          if (!this.revealed) return `<button type="button" class="st" data-i="${i}" aria-pressed="${p}"><span class="box">${p ? '✕' : ''}</span><span>${esc(it.t)}</span></button>`;
+          const right = p === !it.ok;
+          return `<div class="st rev" aria-pressed="${p}"><span class="box">${p ? '✕' : ''}</span><span>${esc(it.t)}</span>
+            <div class="res"><span class="tag ${it.ok ? 'good' : 'miss'}">${it.ok ? 'Правда' : 'Ошибка ИИ'}</span><span class="tag ${right ? 'good' : 'miss'}">${right ? 'Ты прав' : p ? 'Ложная тревога' : 'Пропущено'}</span>${it.tip ? `<span class="tag tip">${esc(it.tip)}</span>` : ''}</div>
+            <div class="exp">${esc(it.e)}</div></div>`;
+        }).join('')}</div>
+        <div class="actions" style="margin-top:14px">${this.revealed ? `<button class="btn primary" type="button" id="tNext">${this.round + 1 < TRAINER.length ? 'Следующий раунд' : 'Итоги'}</button>` : `<button class="btn primary" type="button" id="tCheck">Проверить</button>`}</div>
+      </div>`;
+      el.querySelectorAll('button.st').forEach(b => b.onclick = () => { const i = +b.dataset.i; this.picked.has(i) ? this.picked.delete(i) : this.picked.add(i); this.render(); });
+      const c = $('#tCheck'); if (c) c.onclick = () => {
+        r.items.forEach((it, i) => { const p = this.picked.has(i); this.max++; if (p === !it.ok) this.score++; if (!it.ok && p) { this.caught++; } if (it.ok && p) this.falseAlarms++; if (!it.ok && it.tip) this.tips.add(it.tip); });
+        this.revealed = true; this.render();
+      };
+      const n = $('#tNext'); if (n) n.onclick = () => { this.round++; this.picked = new Set(); this.revealed = false; this.render(); $('#tab-train').scrollIntoView({ block: 'start' }); };
+    },
+    final(el) {
+      const total = TRAINER.reduce((a, r) => a + r.items.filter(i => !i.ok).length, 0);
+      const pct = Math.round(100 * this.score / Math.max(1, this.max));
+      const rank = pct >= 95 ? 'Мастер проверки' : pct >= 80 ? 'Фактчекер' : pct >= 60 ? 'Внимательный читатель' : 'Новичок';
+      el.innerHTML = `<div class="panel final">
+        <div class="big">${pct}%</div><h2>${rank}</h2>
+        <p>Ты нашёл ${this.caught} из ${total} ошибок ИИ. Ложных тревог: ${this.falseAlarms}.</p>
+        <p class="note">Приёмы ошибок ИИ, которые ты теперь знаешь:</p>
+        <div class="tips">${[...this.tips].map(t => `<span class="tag tip">${esc(t)}</span>`).join('')}</div>
+        <div class="actions" style="justify-content:center;margin-top:8px"><button class="btn primary" type="button" id="tAgain">Пройти ещё раз</button><button class="btn" type="button" id="tGo">Проверить свой ответ ИИ</button></div>
+      </div>`;
+      $('#tAgain').onclick = () => { Object.assign(this, { round: 0, picked: new Set(), revealed: false, score: 0, max: 0, caught: 0, falseAlarms: 0, tips: new Set() }); this.render(); };
+      $('#tGo').onclick = () => showTab('check');
+    },
+  };
+
+  /* ---------- boot ---------- */
+  renderHistory();
+  const draft = store.get('tl-draft');
+  renderEngines();
+  if (draft && !EXAMPLES.some(e => e.text === draft)) { $('#answer').value = draft; renderExamples(-1); run(); }
+  else loadExample(0);
+  const hash = (location.hash || '').slice(1);
+  showTab(['check', 'train', 'sources', 'how'].includes(hash) ? hash : (store.get('tl-tab') || 'check'));
+  detectWiki();
+})();
+</script>
+
+</body></html>

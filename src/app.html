@@ -1,0 +1,356 @@
+<title>TrustLens</title>
+<meta name="description" content="TrustLens проверяет ответы ИИ: разбирает текст на утверждения, находит признаки ошибок и выдумки и объясняет, чему можно доверять.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Golos+Text:wght@400;500;600;700&family=JetBrains+Mono:wght@500;700&family=Unbounded:wght@500;700&display=swap">
+<style>
+:root{
+  --bg:#EEF1F5; --surface:#FFFFFF; --surface-2:#F6F8FB; --ink:#101826; --muted:#586477; --line:#D6DCE5;
+  --accent:#2448D8; --accent-ink:#FFFFFF; --accent-soft:#E3E9FF;
+  --ok:#17854A; --bad:#C8352A; --risk:#D06A0C; --check:#A07C00; --opinion:#7349C8; --neutral:#7D8899;
+  --shadow:0 1px 2px rgba(16,24,38,.06),0 6px 24px rgba(16,24,38,.06);
+  --display:"Unbounded","Golos Text",system-ui,sans-serif;
+  --body:"Golos Text",system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;
+  --mono:"JetBrains Mono",ui-monospace,Menlo,Consolas,monospace;
+}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){
+  color-scheme:dark;
+  --bg:#0C1119; --surface:#141B26; --surface-2:#19212E; --ink:#E6ECF4; --muted:#96A2B4; --line:#283346;
+  --accent:#7D98FF; --accent-ink:#0C1119; --accent-soft:#1C2645;
+  --ok:#43C27C; --bad:#FF6E60; --risk:#FF9A3D; --check:#E2BE3E; --opinion:#B198FF; --neutral:#8792A4;
+  --shadow:0 1px 2px rgba(0,0,0,.3),0 8px 28px rgba(0,0,0,.25);
+}}
+:root[data-theme="dark"]{
+  color-scheme:dark;
+  --bg:#0C1119; --surface:#141B26; --surface-2:#19212E; --ink:#E6ECF4; --muted:#96A2B4; --line:#283346;
+  --accent:#7D98FF; --accent-ink:#0C1119; --accent-soft:#1C2645;
+  --ok:#43C27C; --bad:#FF6E60; --risk:#FF9A3D; --check:#E2BE3E; --opinion:#B198FF; --neutral:#8792A4;
+  --shadow:0 1px 2px rgba(0,0,0,.3),0 8px 28px rgba(0,0,0,.25);
+}
+*{box-sizing:border-box}
+body{background:var(--bg);color:var(--ink);font-family:var(--body);font-size:15px;line-height:1.55;margin:0}
+a{color:var(--accent)}
+button,input,textarea,select{font:inherit;color:inherit}
+:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+.wrap{max-width:1240px;margin:0 auto;padding-inline:20px}
+@media (max-width:520px){.wrap{padding-inline:16px}}
+
+/* top bar */
+.top{position:sticky;top:env(safe-area-inset-top,0px);z-index:5;background:color-mix(in srgb,var(--bg) 88%,transparent);backdrop-filter:blur(10px);border-bottom:1px solid var(--line)}
+.top .wrap{display:flex;align-items:center;gap:20px;flex-wrap:wrap;padding-block:12px}
+.brand{display:flex;align-items:center;gap:10px;text-decoration:none;color:var(--ink)}
+.brand b{font-family:var(--display);font-weight:700;font-size:18px;letter-spacing:-.01em}
+.brand small{color:var(--muted);font-size:12.5px;display:block;line-height:1.2}
+.tabs{display:flex;gap:4px;margin-left:auto;background:var(--surface);border:1px solid var(--line);border-radius:999px;padding:4px;overflow-x:auto;max-width:100%}
+.tab{border:0;background:none;padding:7px 14px;border-radius:999px;cursor:pointer;color:var(--muted);font-weight:500;white-space:nowrap}
+.tab[aria-selected="true"]{background:var(--ink);color:var(--bg)}
+
+@media (max-width:620px){.tabs{margin-left:0;width:100%}.tab{flex:1;padding:7px 8px;font-size:13.5px}}
+/* hero line */
+.intro{padding-block:26px 8px;display:flex;justify-content:space-between;gap:24px;align-items:end;flex-wrap:wrap}
+.intro h1{font-family:var(--display);font-weight:700;font-size:clamp(24px,3.4vw,36px);line-height:1.12;letter-spacing:-.02em;margin:0;max-width:20ch;text-wrap:balance}
+.intro p{margin:0;color:var(--muted);max-width:52ch}
+
+/* layout */
+.grid{display:grid;grid-template-columns:minmax(0,5fr) minmax(0,7fr);gap:20px;padding-block:18px 48px;align-items:start}
+@media (max-width:920px){.grid{grid-template-columns:1fr}}
+.panel{background:var(--surface);border:1px solid var(--line);border-radius:14px;box-shadow:var(--shadow)}
+.input-col{padding:18px;display:flex;flex-direction:column;gap:14px;position:sticky;top:78px}
+@media (max-width:920px){.input-col{position:static}}
+.lbl{font-size:12px;font-weight:600;letter-spacing:.06em;text-transform:uppercase;color:var(--muted);display:block;margin-bottom:6px}
+.field{width:100%;background:var(--surface-2);border:1px solid var(--line);border-radius:10px;padding:10px 12px}
+textarea.field{min-height:230px;resize:vertical;line-height:1.55}
+.examples{display:flex;gap:6px;flex-wrap:wrap}
+.chip{border:1px solid var(--line);background:var(--surface);border-radius:999px;padding:5px 11px;font-size:13px;cursor:pointer;color:var(--ink)}
+.chip:hover{border-color:var(--accent)}
+.chip[aria-pressed="true"]{background:var(--accent-soft);border-color:var(--accent);color:var(--accent)}
+.actions{display:flex;gap:8px;flex-wrap:wrap}
+.btn{border:1px solid var(--line);background:var(--surface);border-radius:10px;padding:10px 16px;font-weight:600;cursor:pointer;display:inline-flex;gap:8px;align-items:center}
+.btn.primary{background:var(--accent);border-color:var(--accent);color:var(--accent-ink)}
+.btn:disabled{opacity:.5;cursor:not-allowed}
+.btn.ghost{background:none}
+.engines{border-top:1px dashed var(--line);padding-top:12px;display:grid;gap:6px;font-size:13px}
+.eng{display:flex;gap:8px;align-items:baseline}
+.dot{width:8px;height:8px;border-radius:50%;flex:none;background:var(--neutral);transform:translateY(-1px)}
+.dot.on{background:var(--ok)} .dot.off{background:var(--line)} .dot.wait{background:var(--check)}
+.eng span.m{color:var(--muted)}
+.linkbtn{background:none;border:0;padding:0;color:var(--accent);cursor:pointer;text-decoration:underline;font-size:13px}
+
+/* report */
+.report{display:flex;flex-direction:column;gap:16px}
+.summary{padding:20px;display:grid;grid-template-columns:auto 1fr;gap:22px;align-items:center}
+@media (max-width:560px){.summary{grid-template-columns:1fr}}
+.gauge{position:relative;width:132px;height:132px}
+.gauge svg{width:100%;height:100%;transform:rotate(-90deg)}
+.gauge .val{position:absolute;inset:0;display:grid;place-items:center;text-align:center}
+.gauge .val b{font-family:var(--mono);font-size:36px;line-height:1;font-variant-numeric:tabular-nums}
+.gauge .val small{display:block;font-size:11px;color:var(--muted);letter-spacing:.06em;text-transform:uppercase;margin-top:4px}
+.verdict h2{font-family:var(--display);font-size:20px;font-weight:700;margin:0 0 4px;letter-spacing:-.01em;text-wrap:balance}
+.verdict p{margin:0 0 12px;color:var(--muted)}
+.bar{display:flex;height:10px;border-radius:999px;overflow:hidden;background:var(--surface-2)}
+.bar i{display:block;height:100%}
+.legend{display:flex;flex-wrap:wrap;gap:6px 14px;margin-top:10px;font-size:13px}
+.legend span{display:inline-flex;gap:6px;align-items:center;font-variant-numeric:tabular-nums}
+.legend i{width:9px;height:9px;border-radius:2px;display:inline-block}
+
+.sec{padding:18px 20px}
+.sec h3{font-family:var(--display);font-size:14px;font-weight:500;margin:0 0 12px;letter-spacing:.01em;display:flex;justify-content:space-between;gap:10px;align-items:center;flex-wrap:wrap}
+.marked{font-size:16px;line-height:1.9;white-space:pre-wrap;overflow-wrap:anywhere}
+.m{cursor:pointer;border-radius:3px;padding:1px 0;box-decoration-break:clone;-webkit-box-decoration-break:clone;border-bottom:2px solid transparent;transition:background .15s}
+.m sup{font-family:var(--mono);font-size:10px;font-weight:700;margin-right:2px;opacity:.8}
+.m.v-ok{background:color-mix(in srgb,var(--ok) 13%,transparent);border-color:var(--ok)}
+.m.v-bad{background:color-mix(in srgb,var(--bad) 15%,transparent);border-color:var(--bad);text-decoration:line-through;text-decoration-color:color-mix(in srgb,var(--bad) 55%,transparent)}
+.m.v-risk{background:color-mix(in srgb,var(--risk) 15%,transparent);border-color:var(--risk);border-bottom-style:dashed}
+.m.v-check{background:color-mix(in srgb,var(--check) 13%,transparent);border-color:var(--check);border-bottom-style:dotted}
+.m.v-opinion{border-color:var(--opinion);border-bottom-style:dotted}
+.m.v-neutral{border-color:transparent}
+.m.active{outline:2px solid var(--accent);outline-offset:1px}
+
+.filters{display:flex;gap:6px;flex-wrap:wrap}
+.claims{display:grid;gap:10px}
+.claim{border:1px solid var(--line);border-left:4px solid var(--c);border-radius:10px;padding:14px 16px;background:var(--surface);scroll-margin-top:90px;transition:box-shadow .2s}
+.claim.active{box-shadow:0 0 0 2px var(--accent)}
+.claim header{display:flex;gap:8px;align-items:center;flex-wrap:wrap;margin-bottom:6px}
+.claim .n{font-family:var(--mono);font-size:12px;color:var(--muted)}
+.pill{font-size:12px;font-weight:700;padding:2px 9px;border-radius:999px;background:color-mix(in srgb,var(--c) 16%,transparent);color:var(--c)}
+.src{font-size:11.5px;border:1px solid var(--line);border-radius:6px;padding:1px 7px;color:var(--muted)}
+.src.conflict{border-color:var(--risk);color:var(--risk)}
+.claim .ct{margin:0 0 8px;font-weight:500}
+.claim h4{font-size:11.5px;letter-spacing:.07em;text-transform:uppercase;color:var(--muted);margin:10px 0 4px}
+.claim ul{margin:0;padding-left:18px;display:grid;gap:4px}
+.claim .links{display:flex;gap:6px;flex-wrap:wrap;margin-top:8px}
+.claim .links a{font-size:13px;text-decoration:none;border:1px solid var(--line);border-radius:8px;padding:4px 9px;background:var(--surface-2)}
+.claim .links a:hover{border-color:var(--accent)}
+.v-ok{--c:var(--ok)} .v-bad{--c:var(--bad)} .v-risk{--c:var(--risk)} .v-check{--c:var(--check)} .v-opinion{--c:var(--opinion)} .v-neutral{--c:var(--neutral)}
+.fix{margin-top:8px;padding:8px 10px;border-radius:8px;background:color-mix(in srgb,var(--ok) 10%,transparent);font-size:14px}
+.prompt-box{background:var(--surface-2);border:1px solid var(--line);border-radius:10px;padding:12px;font-family:var(--mono);font-size:12.5px;white-space:pre-wrap;max-height:220px;overflow:auto}
+.note{font-size:13px;color:var(--muted)}
+.empty{padding:40px 20px;text-align:center;color:var(--muted)}
+.spin{display:inline-block;width:14px;height:14px;border:2px solid currentColor;border-right-color:transparent;border-radius:50%;animation:sp 0.8s linear infinite}
+@keyframes sp{to{transform:rotate(360deg)}}
+@media (prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important}}
+
+/* trainer */
+.train{max-width:760px;margin:0 auto;padding-block:24px 60px;display:grid;gap:16px}
+.train .panel{padding:20px}
+.round-head{display:flex;justify-content:space-between;gap:12px;align-items:baseline;flex-wrap:wrap}
+.round-head h2{font-family:var(--display);font-size:20px;margin:0}
+.progress{display:flex;gap:4px}
+.progress i{width:28px;height:6px;border-radius:3px;background:var(--line)}
+.progress i.done{background:var(--accent)}
+.stmt{display:grid;gap:8px;margin-top:14px}
+.st{text-align:left;border:1px solid var(--line);background:var(--surface-2);border-radius:10px;padding:12px 14px;cursor:pointer;display:grid;grid-template-columns:22px 1fr;gap:10px;align-items:start}
+.st .box{width:20px;height:20px;border-radius:6px;border:2px solid var(--line);display:grid;place-items:center;font-size:13px;font-weight:700;margin-top:1px}
+.st[aria-pressed="true"]{border-color:var(--bad);background:color-mix(in srgb,var(--bad) 8%,var(--surface))}
+.st[aria-pressed="true"] .box{border-color:var(--bad);background:var(--bad);color:#fff}
+.st.rev{cursor:default}
+.st .exp{grid-column:2;font-size:14px;color:var(--muted);margin-top:4px}
+.st .res{grid-column:2;display:flex;gap:6px;flex-wrap:wrap;margin-top:6px}
+.tag{font-size:12px;font-weight:700;padding:2px 8px;border-radius:999px}
+.tag.good{background:color-mix(in srgb,var(--ok) 16%,transparent);color:var(--ok)}
+.tag.miss{background:color-mix(in srgb,var(--bad) 16%,transparent);color:var(--bad)}
+.tag.tip{background:var(--accent-soft);color:var(--accent)}
+.scoreline{font-family:var(--mono);font-variant-numeric:tabular-nums;color:var(--muted)}
+.final{text-align:center;display:grid;gap:10px;justify-items:center}
+.final .big{font-family:var(--mono);font-size:52px;font-weight:700;line-height:1}
+.final h2{font-family:var(--display);margin:0;font-size:22px}
+.tips{display:flex;flex-wrap:wrap;gap:6px;justify-content:center}
+
+/* how */
+.how{padding-block:24px 60px;display:grid;gap:18px}
+.how .panel{padding:22px}
+.how h2{font-family:var(--display);font-size:20px;margin:0 0 12px;letter-spacing:-.01em}
+.how p{max-width:72ch}
+.pipe{display:grid;grid-template-columns:repeat(5,minmax(0,1fr));gap:10px;counter-reset:s}
+@media (max-width:860px){.pipe{grid-template-columns:1fr 1fr}}
+@media (max-width:480px){.pipe{grid-template-columns:1fr}}
+.step{border:1px solid var(--line);border-radius:10px;padding:14px;background:var(--surface-2);counter-increment:s}
+.step::before{content:counter(s);font-family:var(--mono);font-weight:700;color:var(--accent);display:block;margin-bottom:6px}
+.step b{display:block;margin-bottom:4px}
+.step span{font-size:13.5px;color:var(--muted)}
+.tbl{overflow-x:auto}
+table{border-collapse:collapse;width:100%;font-size:14px;min-width:560px}
+th,td{text-align:left;padding:9px 10px;border-bottom:1px solid var(--line);vertical-align:top}
+th{font-size:12px;letter-spacing:.06em;text-transform:uppercase;color:var(--muted);font-weight:600}
+.cols{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:14px}
+@media (max-width:800px){.cols{grid-template-columns:1fr}}
+.cols h3{font-size:15px;margin:0 0 6px}
+.cols ul{margin:0;padding-left:18px;display:grid;gap:4px;font-size:14px}
+
+.trusted{display:flex;flex-wrap:wrap;gap:6px}
+.trusted a{display:flex;flex-direction:column;text-decoration:none;border:1px solid var(--line);border-radius:10px;padding:6px 10px;background:var(--surface);color:var(--ink);min-width:0}
+.trusted a:hover{border-color:var(--ok)}
+.trusted b{font-size:13px;font-weight:600}
+.trusted small{font-size:11.5px;color:var(--muted)}
+.bib{margin:0;padding-left:22px;display:grid;gap:6px;font-size:14px;overflow-wrap:anywhere}
+.hist{display:grid;gap:6px}
+.hitem{display:grid;grid-template-columns:34px 1fr auto;gap:8px;align-items:center;text-align:left;border:1px solid var(--line);background:var(--surface-2);border-radius:8px;padding:6px 8px;cursor:pointer;font-size:13px}
+.hitem span{overflow:hidden;text-overflow:ellipsis;white-space:nowrap;min-width:0}
+.hitem time{color:var(--muted);font-size:12px}
+.hs{font-family:var(--mono);font-size:13px;text-align:center;border-radius:6px;padding:2px 0;background:var(--line)}
+.hs.high{background:color-mix(in srgb,var(--ok) 20%,transparent);color:var(--ok)} .hs.mid{background:color-mix(in srgb,var(--risk) 20%,transparent);color:var(--risk)} .hs.low{background:color-mix(in srgb,var(--bad) 20%,transparent);color:var(--bad)}
+#history{border-top:1px dashed var(--line);padding-top:12px;display:grid;gap:8px}
+.searchrow{display:flex;gap:8px;margin-bottom:12px;flex-wrap:wrap}.searchrow .field{flex:1;min-width:200px}
+.catalog{display:grid;grid-template-columns:repeat(auto-fill,minmax(300px,1fr));gap:14px;align-items:start}
+.cat{padding:18px}.cat h3{font-family:var(--display);font-size:14px;font-weight:500;margin:0 0 10px}
+.srcrow{display:grid;gap:2px;text-decoration:none;color:var(--ink);padding:10px 0;border-top:1px solid var(--line)}
+.srcrow:first-of-type{border-top:0}
+.srcrow small{color:var(--accent);font-size:12px}.srcrow span{font-size:13.5px;color:var(--muted)}
+@media (max-width:360px){.catalog{grid-template-columns:1fr}}
+/* modal */
+.modal{position:fixed;inset:0;background:rgba(8,12,20,.5);display:grid;place-items:center;padding:16px;z-index:20}
+.modal .panel{max-width:480px;width:100%;padding:20px;display:grid;gap:12px}
+.modal h2{font-family:var(--display);font-size:18px;margin:0}
+.toast{position:fixed;left:50%;bottom:calc(20px + env(safe-area-inset-bottom,0px));transform:translateX(-50%);background:var(--ink);color:var(--bg);padding:9px 16px;border-radius:10px;font-size:14px;z-index:30}
+</style>
+
+<header class="top">
+  <div class="wrap">
+    <a class="brand" href="#check" aria-label="TrustLens">
+      <svg width="34" height="34" viewBox="0 0 34 34" aria-hidden="true"><circle cx="14" cy="14" r="10.5" fill="none" stroke="var(--ink)" stroke-width="3"/><path d="M22 22l8 8" stroke="var(--ink)" stroke-width="3.4" stroke-linecap="round"/><path d="M9 14.5l3.4 3.3L19 11" fill="none" stroke="var(--accent)" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/></svg>
+      <span><b>TrustLens</b><small>Лупа доверия к ответам ИИ</small></span>
+    </a>
+    <nav class="tabs" role="tablist">
+      <button class="tab" role="tab" data-tab="check" aria-selected="true">Проверить ответ</button>
+      <button class="tab" role="tab" data-tab="train" aria-selected="false">Тренажёр</button>
+      <button class="tab" role="tab" data-tab="sources" aria-selected="false">Источники</button>
+      <button class="tab" role="tab" data-tab="how" aria-selected="false">Как это работает</button>
+    </nav>
+  </div>
+</header>
+
+<main>
+<!-- CHECK -->
+<section id="tab-check" class="wrap">
+  <div class="intro">
+    <h1>Вставь ответ ИИ. Мы покажем, чему в нём можно верить.</h1>
+    <p>TrustLens разбирает ответ на отдельные утверждения, ищет признаки выдумки, сверяет факты с источниками и объясняет каждое решение простыми словами.</p>
+  </div>
+  <div class="grid">
+    <form class="panel input-col" id="form">
+      <div>
+        <label class="lbl" for="q">Твой вопрос к ИИ (необязательно)</label>
+        <input class="field" id="q" placeholder="Например: расскажи об истории космоса">
+      </div>
+      <div>
+        <label class="lbl" for="answer">Ответ ИИ</label>
+        <textarea class="field" id="answer" placeholder="Вставь сюда ответ ChatGPT, Gemini или другого ИИ"></textarea>
+      </div>
+      <div>
+        <span class="lbl">Примеры</span>
+        <div class="examples" id="examples"></div>
+      </div>
+      <div class="actions">
+        <button class="btn primary" type="submit" id="run">Проверить</button>
+      </div>
+      <div class="engines" id="engines" aria-live="polite"></div>
+      <div id="history" hidden></div>
+    </form>
+
+    <div class="report" id="report"></div>
+  </div>
+</section>
+
+<!-- TRAINER -->
+<section id="tab-train" class="wrap" hidden>
+  <div class="intro">
+    <h1>Тренажёр: найди, где ИИ ошибся</h1>
+    <p>В каждом ответе спрятаны одна-две ошибки. Отметь утверждения, которые считаешь ошибкой, и узнай, по каким признакам их можно было поймать.</p>
+  </div>
+  <div class="train" id="train"></div>
+</section>
+
+<!-- SOURCES -->
+<section id="tab-sources" class="wrap" hidden>
+  <div class="intro">
+    <h1>Где искать правду, если ИИ не уверен</h1>
+    <p>Каталог надёжных сайтов по темам и пять вопросов, которые помогут понять, можно ли доверять любому источнику.</p>
+  </div>
+  <div class="how">
+    <form class="panel" id="srcForm">
+      <h2>Подобрать источники под вопрос</h2>
+      <div class="searchrow"><input class="field" id="srcq" placeholder="Например: сколько костей у человека" aria-label="Вопрос или факт"><button class="btn primary" type="submit">Подобрать</button></div>
+      <div id="srcres"></div>
+    </form>
+    <div class="panel">
+      <h2>Пять вопросов к любому источнику</h2>
+      <div class="pipe">
+        <div class="step"><b>Кто автор?</b><span>Учёный, госорган, редакция с именем. Анонимный пост или «эксперты говорят» не подходят.</span></div>
+        <div class="step"><b>Когда опубликовано?</b><span>Для новостей, законов и цифр важна свежесть. Ищи дату на странице.</span></div>
+        <div class="step"><b>Откуда данные?</b><span>Хороший источник ссылается на первоисточник: исследование, закон, статистику.</span></div>
+        <div class="step"><b>Совпадает ли с другими?</b><span>Факт подтверждают минимум два независимых источника.</span></div>
+        <div class="step"><b>Зачем это написано?</b><span>Реклама, продажа или эмоции снижают доверие. Нужны факты, а не убеждение.</span></div>
+      </div>
+    </div>
+    <div class="catalog" id="catalog"></div>
+  </div>
+</section>
+
+<!-- HOW -->
+<section id="tab-how" class="wrap" hidden>
+  <div class="intro">
+    <h1>Как TrustLens решает, чему доверять</h1>
+    <p>Мы не просим ещё один ИИ «поверить на слово». Каждое решение опирается на проверку, которую пользователь видит и может повторить сам.</p>
+  </div>
+  <div class="how">
+    <div class="panel">
+      <h2>Конвейер проверки</h2>
+      <div class="pipe">
+        <div class="step"><b>Разбор на утверждения</b><span>Ответ делится на отдельные фразы. Каждая проверяется отдельно, потому что ошибка обычно прячется в одной детали среди правды.</span></div>
+        <div class="step"><b>Тип утверждения</b><span>Факт, число, цитата, ссылка на исследование, мнение или совет. Мнение не проверяют как факт.</span></div>
+        <div class="step"><b>Признаки выдумки</b><span>Выдуманные источники, слишком точные цифры, даты из будущего, категоричность, чужие цитаты, противоречия внутри ответа.</span></div>
+        <div class="step"><b>Сверка с источниками</b><span>Локальная база проверенных фактов, пересчёт математики, поиск по Википедии и каталог надёжных сайтов по теме.</span></div>
+        <div class="step"><b>Объяснение и оценка</b><span>Цвет для каждой фразы, причина, как проверить самому, ссылки и общий индекс доверия от 0 до 100.</span></div>
+      </div>
+    </div>
+
+    <div class="panel">
+      <h2>Что означают цвета</h2>
+      <div class="tbl"><table>
+        <thead><tr><th>Метка</th><th>Когда ставим</th><th>Что делать</th></tr></thead>
+        <tbody>
+          <tr><td><span class="pill v-ok">Подтверждено</span></td><td>Совпадает с источником или верно посчитано</td><td>Можно использовать, указав первоисточник</td></tr>
+          <tr><td><span class="pill v-bad">Ошибка</span></td><td>Противоречит источнику, известный миф, ошибка в расчёте</td><td>Не использовать, исправить по источнику</td></tr>
+          <tr><td><span class="pill v-risk">Похоже на выдумку</span></td><td>Сильные признаки выдумки без подтверждения</td><td>Найти первоисточник, иначе не верить</td></tr>
+          <tr><td><span class="pill v-check">Проверь сам</span></td><td>Проверяемый факт без подтверждения и без тревожных признаков</td><td>Сверить с двумя независимыми источниками</td></tr>
+          <tr><td><span class="pill v-opinion">Мнение или совет</span></td><td>Оценка, рекомендация, прогноз</td><td>Сравнить с мнением специалистов</td></tr>
+        </tbody>
+      </table></div>
+    </div>
+
+    <div class="panel">
+      <h2>Десять признаков, по которым ловим выдумку</h2>
+      <div class="tbl"><table>
+        <thead><tr><th>Признак</th><th>Почему это подозрительно</th></tr></thead>
+        <tbody>
+          <tr><td>Исследование без ссылки</td><td>«Учёные доказали» без авторов, названия и года. Проверить невозможно, а модели легко сочиняют такие фразы.</td></tr>
+          <tr><td>Слишком точная цифра</td><td>73,4% звучит научно. Если рядом нет источника, точность ничего не значит.</td></tr>
+          <tr><td>DOI или ссылка</td><td>Модели генерируют правдоподобные адреса статей. Мы даём ссылку, чтобы открыть и убедиться.</td></tr>
+          <tr><td>Процент больше 100</td><td>«На 340% лучше» эффектно и почти всегда требует первоисточника.</td></tr>
+          <tr><td>Цитата знаменитости</td><td>Цитаты часто приписывают не тем людям. Нужна книга, речь или письмо.</td></tr>
+          <tr><td>Дата из будущего</td><td>Событие после текущего года описано как прошедшее.</td></tr>
+          <tr><td>Противоречие внутри ответа</td><td>Одно событие с разными годами в разных фразах. Минимум одна дата неверна.</td></tr>
+          <tr><td>Категоричность</td><td>«Всегда», «доказано», «единственный». Наука так говорит редко.</td></tr>
+          <tr><td>Устаревшие данные</td><td>«Сейчас», «последняя версия». У модели есть дата среза знаний.</td></tr>
+          <tr><td>Высокая цена ошибки</td><td>Здоровье, деньги, закон. Даже верный на вид ответ нужно сверить со специалистом.</td></tr>
+        </tbody>
+      </table></div>
+    </div>
+
+    <div class="panel">
+      <h2>Честно об ограничениях</h2>
+      <div class="cols">
+        <div><h3>Что уже работает</h3><ul><li>Разбор ответа и 10 признаков ошибок и выдумки</li><li>База из 58 проверенных фактов школьной программы с источниками</li><li>Проверка арифметики и процентов</li><li>Сверка чисел и дат с Википедией</li><li>Надёжные источники по 12 темам к каждому утверждению</li><li>Оценка ссылок из ответа: официальный сайт, СМИ, блог или неизвестный</li><li>Готовый список источников для доклада</li><li>История проверок и тренажёр из 6 раундов</li></ul></div>
+        <div><h3>Чего мы не обещаем</h3><ul><li>Индекс доверия подсказывает, а не выносит приговор</li><li>Википедия тоже может ошибаться</li><li>База фактов пока небольшая, поэтому многие утверждения получат метку «Проверь сам» со ссылками на надёжные источники</li><li>«Проверь сам» значит «не нашли подтверждения», а не «ложь»</li></ul></div>
+        <div><h3>Что дальше</h3><ul><li>Расширение для браузера поверх ChatGPT и Gemini</li><li>Telegram-бот для быстрой проверки</li><li>Открытая база фактов, которую пополняют учителя</li><li>Казахский и английский языки</li><li>Режим учителя: проверка рефератов на следы ИИ-ошибок</li></ul></div>
+      </div>
+    </div>
+  </div>
+</section>
+</main>
+
+
+<script>/*__SOURCES__*/</script>
+<script>/*__ENGINE__*/</script>
+<script>/*__EXAMPLES__*/</script>
+<script>/*__APP__*/</script>
