@@ -61,6 +61,9 @@ button,input,textarea,select{font:inherit;color:inherit}
 .field{width:100%;background:var(--surface-2);border:1px solid var(--line);border-radius:10px;padding:10px 12px}
 textarea.field{min-height:230px;resize:vertical;line-height:1.55}
 .examples{display:flex;gap:6px;flex-wrap:wrap}
+.mode{display:flex;gap:10px;align-items:center;flex-wrap:wrap;padding-bottom:14px;border-bottom:1px dashed var(--line)}
+.btn.own{border:2px solid var(--accent);color:var(--accent);background:var(--accent-soft)}
+.lblrow{display:flex;justify-content:space-between;align-items:baseline;gap:8px}.lblrow .lbl{margin-bottom:6px}
 .chip{border:1px solid var(--line);background:var(--surface);border-radius:999px;padding:5px 11px;font-size:13px;cursor:pointer;color:var(--ink)}
 .chip:hover{border-color:var(--accent)}
 .chip[aria-pressed="true"]{background:var(--accent-soft);border-color:var(--accent);color:var(--accent)}
@@ -228,12 +231,16 @@ th{font-size:12px;letter-spacing:.06em;text-transform:uppercase;color:var(--mute
   </div>
   <div class="grid">
     <form class="panel input-col" id="form">
+      <div class="mode">
+        <button type="button" class="btn own" id="ownText">✎ Проверить свой текст</button>
+        <span class="note">или выбери пример ниже</span>
+      </div>
       <div>
         <label class="lbl" for="q">Твой вопрос к ИИ (необязательно)</label>
         <input class="field" id="q" placeholder="Например: расскажи об истории космоса">
       </div>
       <div>
-        <label class="lbl" for="answer">Ответ ИИ</label>
+        <div class="lblrow"><label class="lbl" for="answer">Ответ ИИ</label><button type="button" class="linkbtn" id="clearText">Очистить</button></div>
         <textarea class="field" id="answer" placeholder="Вставь сюда ответ ChatGPT, Gemini или другого ИИ"></textarea>
       </div>
       <div>
@@ -255,7 +262,7 @@ th{font-size:12px;letter-spacing:.06em;text-transform:uppercase;color:var(--mute
 <section id="tab-train" class="wrap" hidden>
   <div class="intro">
     <h1>Тренажёр: найди, где ИИ ошибся</h1>
-    <p>В каждом ответе спрятаны одна-две ошибки. Отметь утверждения, которые считаешь ошибкой, и узнай, по каким признакам их можно было поймать.</p>
+    <p>В каждой игре 6 случайных раундов из __NR__. В каждом ответе спрятаны одна-две ошибки. Отметь утверждения, которые считаешь ошибкой, и узнай, по каким признакам их можно было поймать.</p>
   </div>
   <div class="train" id="train"></div>
 </section>

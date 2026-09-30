@@ -275,18 +275,36 @@ ${flagged.map((c, i) => `${i + 1}. ${c.text}`).join('\n')}`;
     $('#q').value = EXAMPLES[i].q; $('#answer').value = EXAMPLES[i].text;
     renderExamples(i); run();
   }
+  function ownText() {
+    $('#q').value = ''; $('#answer').value = '';
+    renderExamples(-1);
+    state.result = null; state.text = ''; renderReport(); renderEngines();
+    store.set('tl-draft', null);
+    $('#answer').focus();
+    $('#answer').scrollIntoView({ block: 'center', behavior: matchMedia('(prefers-reduced-motion: reduce)').matches ? 'auto' : 'smooth' });
+  }
+  $('#ownText').onclick = ownText;
+  $('#clearText').onclick = ownText;
   $('#form').onsubmit = e => { e.preventDefault(); renderExamples(-1); run(); };
 
   /* ---------- trainer ---------- */
+  const shuffle = a => { a = a.slice(); for (let i = a.length - 1; i > 0; i--) { const j = Math.floor(Math.random() * (i + 1)); [a[i], a[j]] = [a[j], a[i]]; } return a; };
   const Trainer = {
-    round: 0, picked: new Set(), revealed: false, score: 0, max: 0, caught: 0, falseAlarms: 0, tips: new Set(),
+    rounds: null, round: 0, picked: new Set(), revealed: false, score: 0, max: 0, caught: 0, falseAlarms: 0, tips: new Set(),
+    start(n) {
+      const pool = shuffle(TRAINER).slice(0, n);
+      Object.assign(this, { rounds: pool.map(r => ({ ...r, items: shuffle(r.items) })), round: 0, picked: new Set(), revealed: false, score: 0, max: 0, caught: 0, falseAlarms: 0, tips: new Set() });
+      this.render();
+    },
     render() {
       const el = $('#train');
-      if (this.round >= TRAINER.length) return this.final(el);
-      const r = TRAINER[this.round];
+      if (!this.rounds) return this.start(6);
+      const TR = this.rounds;
+      if (this.round >= TR.length) return this.final(el);
+      const r = TR[this.round];
       el.innerHTML = `<div class="panel">
-        <div class="round-head"><h2>${esc(r.topic)}</h2><span class="scoreline">Раунд ${this.round + 1} из ${TRAINER.length} · очки ${this.score}/${this.max}</span></div>
-        <div class="progress" aria-hidden="true">${TRAINER.map((_, i) => `<i class="${i < this.round ? 'done' : ''}"></i>`).join('')}</div>
+        <div class="round-head"><h2>${esc(r.topic)}</h2><span class="scoreline">Раунд ${this.round + 1} из ${TR.length} · очки ${this.score}/${this.max}</span></div>
+        <div class="progress" aria-hidden="true">${TR.map((_, i) => `<i class="${i < this.round ? 'done' : ''}"></i>`).join('')}</div>
         <p class="note">Так ответил ИИ. ${this.revealed ? 'Вот разбор.' : 'Отметь утверждения, которые считаешь ошибкой.'}</p>
         <div class="stmt">${r.items.map((it, i) => {
           const p = this.picked.has(i);
@@ -296,7 +314,7 @@ ${flagged.map((c, i) => `${i + 1}. ${c.text}`).join('\n')}`;
             <div class="res"><span class="tag ${it.ok ? 'good' : 'miss'}">${it.ok ? 'Правда' : 'Ошибка ИИ'}</span><span class="tag ${right ? 'good' : 'miss'}">${right ? 'Ты прав' : p ? 'Ложная тревога' : 'Пропущено'}</span>${it.tip ? `<span class="tag tip">${esc(it.tip)}</span>` : ''}</div>
             <div class="exp">${esc(it.e)}</div></div>`;
         }).join('')}</div>
-        <div class="actions" style="margin-top:14px">${this.revealed ? `<button class="btn primary" type="button" id="tNext">${this.round + 1 < TRAINER.length ? 'Следующий раунд' : 'Итоги'}</button>` : `<button class="btn primary" type="button" id="tCheck">Проверить</button>`}</div>
+        <div class="actions" style="margin-top:14px">${this.revealed ? `<button class="btn primary" type="button" id="tNext">${this.round + 1 < TR.length ? 'Следующий раунд' : 'Итоги'}</button>` : `<button class="btn primary" type="button" id="tCheck">Проверить</button>`}</div>
       </div>`;
       el.querySelectorAll('button.st').forEach(b => b.onclick = () => { const i = +b.dataset.i; this.picked.has(i) ? this.picked.delete(i) : this.picked.add(i); this.render(); });
       const c = $('#tCheck'); if (c) c.onclick = () => {
@@ -306,7 +324,7 @@ ${flagged.map((c, i) => `${i + 1}. ${c.text}`).join('\n')}`;
       const n = $('#tNext'); if (n) n.onclick = () => { this.round++; this.picked = new Set(); this.revealed = false; this.render(); $('#tab-train').scrollIntoView({ block: 'start' }); };
     },
     final(el) {
-      const total = TRAINER.reduce((a, r) => a + r.items.filter(i => !i.ok).length, 0);
+      const total = this.rounds.reduce((a, r) => a + r.items.filter(i => !i.ok).length, 0);
       const pct = Math.round(100 * this.score / Math.max(1, this.max));
       const rank = pct >= 95 ? 'Мастер проверки' : pct >= 80 ? 'Фактчекер' : pct >= 60 ? 'Внимательный читатель' : 'Новичок';
       el.innerHTML = `<div class="panel final">
@@ -314,9 +332,10 @@ ${flagged.map((c, i) => `${i + 1}. ${c.text}`).join('\n')}`;
         <p>Ты нашёл ${this.caught} из ${total} ошибок ИИ. Ложных тревог: ${this.falseAlarms}.</p>
         <p class="note">Приёмы ошибок ИИ, которые ты теперь знаешь:</p>
         <div class="tips">${[...this.tips].map(t => `<span class="tag tip">${esc(t)}</span>`).join('')}</div>
-        <div class="actions" style="justify-content:center;margin-top:8px"><button class="btn primary" type="button" id="tAgain">Пройти ещё раз</button><button class="btn" type="button" id="tGo">Проверить свой ответ ИИ</button></div>
+        <div class="actions" style="justify-content:center;margin-top:8px"><button class="btn primary" type="button" id="tAgain">Ещё 6 новых раундов</button><button class="btn" type="button" id="tAll">Все ${TRAINER.length} раундов</button><button class="btn" type="button" id="tGo">Проверить свой ответ ИИ</button></div>
       </div>`;
-      $('#tAgain').onclick = () => { Object.assign(this, { round: 0, picked: new Set(), revealed: false, score: 0, max: 0, caught: 0, falseAlarms: 0, tips: new Set() }); this.render(); };
+      $('#tAgain').onclick = () => this.start(6);
+      $('#tAll').onclick = () => this.start(TRAINER.length);
       $('#tGo').onclick = () => showTab('check');
     },
   };
