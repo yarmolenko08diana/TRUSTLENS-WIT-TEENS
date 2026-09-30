@@ -43,10 +43,11 @@ build.py          собирает index.html из файлов src/
 
 После изменений в `src/` запустите `python3 build.py`. Для сборки нужны Python 3 и Node.js.
 
-## Запуск
+## Роли команды
 
-Откройте `index.html` в браузере. Устанавливать ничего не нужно. Сверка с Википедией работает, когда сайт открыт через интернет, например через GitHub Pages.
+Команда: **luiqi**
 
-## Публикация на GitHub Pages
-
-Settings → Pages → Source: Deploy from a branch → Branch: `main`, папка `/ (root)` → Save. Через минуту сайт будет доступен по адресу `https://yarmolenko08diana.github.io/TRUSTLENS-WIT-TEENS/`.
+| Участник | Роль | Зона ответственности |
+| --- | --- | --- |
+| Ярмоленко Диана Дмитриевна | Lead Fullstack & AI Engineer | Бекенд, логика и ИИ |
+| Молдагали Жасмина Мейрманкызы | Frontend & UI/UX Developer | Фронтенд, интерфейс и питч |
