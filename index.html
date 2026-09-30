@@ -1321,8 +1321,8 @@ ${flagged.map((c, i) => `${i + 1}. ${c.text}`).join('\n')}`;
           if (!this.revealed) return `<button type="button" class="st" data-i="${i}" aria-pressed="${p}"><span class="box">${p ? '✕' : ''}</span><span>${esc(it.t)}</span></button>`;
           const right = p === !it.ok;
           return `<div class="st rev" aria-pressed="${p}"><span class="box">${p ? '✕' : ''}</span><span>${esc(it.t)}</span>
-            <div class="res"><span class="tag ${it.ok ? 'good' : 'miss'}">${it.ok ? 'Правда' : 'Ошибка ИИ'}</span><span class="tag ${right ? 'good' : 'miss'}">${right ? 'Ты прав' : p ? 'Ложная тревога' : 'Пропущено'}</span>${it.tip ? `<span class="tag tip">${esc(it.tip)}</span>` : ''}</div>
-            <div class="exp">${esc(it.e)}</div></div>`;
+            <div class="res"><span class="tag ${right ? 'good' : 'miss'}">${it.ok ? (right ? '✓ Верно, это правда' : '✗ Это правда, а не ошибка') : (right ? '✓ Ты нашёл ошибку ИИ' : '✗ Ты пропустил ошибку ИИ')}</span></div>
+            <div class="exp">${!it.ok && it.tip ? `<b>Приём ИИ: ${esc(it.tip.toLowerCase())}.</b> ` : ''}${esc(it.e)}</div></div>`;
         }).join('')}</div>
         <div class="actions" style="margin-top:14px">${this.revealed ? `<button class="btn primary" type="button" id="tNext">${this.round + 1 < TR.length ? 'Следующий раунд' : 'Итоги'}</button>` : `<button class="btn primary" type="button" id="tCheck">Проверить</button>`}</div>
       </div>`;
