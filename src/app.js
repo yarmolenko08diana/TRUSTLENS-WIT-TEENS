@@ -26,7 +26,7 @@
   function renderEngines() {
     const row = (st, name, msg) => `<div class="eng"><i class="dot ${st}"></i><span><b>${name}</b> <span class="m">${msg}</span></span></div>`;
     const wikiMsg = { on: 'сверяем числа и даты', off: 'откроется в полной версии сайта', wait: 'проверяем доступ…' }[eng.wiki];
-    $('#engines').innerHTML = row('on', 'База фактов', `${TL.FACTS.length} проверенных фактов`) + row('on', 'Математика', 'пересчёт вычислений и процентов') + row('on', 'Признаки выдумки', '10 сигналов и проверка ссылок') + row('on', 'Надёжные источники', `${Object.keys(SRC.S).length} проверенных сайтов по ${SRC.TOPICS.length} темам`) + row(eng.wiki, 'Википедия', wikiMsg);
+    $('#engines').innerHTML = row('on', 'База фактов', `${TL.FACTS.length} проверенных фактов`) + row('on', 'Математика', 'пересчёт вычислений и процентов') + row('on', 'Признаки выдумки', '10 сигналов и проверка ссылок') + row('on', 'Надёжные источники', `${Object.keys(SRC.S).length} проверенных сайтов по ${SRC.TOPICS.length} темам`) + row(eng.wiki, 'Википедия (подсказка)', wikiMsg);
   }
 
   async function detectWiki() {
@@ -109,9 +109,7 @@
         const found = nums.filter(x => variants(x).some(v => ext.includes(v)));
         if (found.length === nums.length) {
           const sn = snippet(page.extract.replace(/[  ]/g, ' '), variants(found[0]).find(v => ext.includes(v)));
-          c.checks.push({ src: 'Википедия', result: 'support', fact: `В статье «${page.title}» те же цифры${sn ? ': «' + sn + '»' : '.'}`, link: page.fullurl });
-        } else if (!found.length) {
-          c.sig.push({ k: 'wiki-miss', level: 'warn', title: 'Не нашли цифры в Википедии', why: `В статье «${page.title}» нет чисел ${nums.map(x => x.raw).join(', ')}. Это не доказывает ошибку, но повод проверить.`, link: page.fullurl });
+          c.checks.push({ src: 'Википедия', result: 'support', soft: true, fact: `В статье «${page.title}» те же цифры${sn ? ': «' + sn + '»' : '.'}`, link: page.fullurl });
         }
       } catch {}
     }));
@@ -119,9 +117,10 @@
   }
 
   /* ---------- report rendering ---------- */
-  const COLORS = { ok: 'var(--ok)', bad: 'var(--bad)', risk: 'var(--risk)', check: 'var(--check)', opinion: 'var(--opinion)', neutral: 'var(--neutral)' };
+  const COLORS = { ok: 'var(--ok)', likely: 'var(--likely)', bad: 'var(--bad)', risk: 'var(--risk)', check: 'var(--check)', opinion: 'var(--opinion)', neutral: 'var(--neutral)' };
   const LEVEL = {
     high: ['Можно доверять, но выборочно', 'Ключевые факты подтверждены. Перед использованием проверь пункты с жёлтой меткой.'],
+    clean: ['Ошибок не нашли', 'Ни одно утверждение не противоречит источникам, признаков выдумки нет. Жёлтые пункты мы не смогли подтвердить сами: это не значит, что они неверны. Для доклада сверь их с источниками ниже.'],
     mid: ['Доверяй осторожно', 'Часть утверждений не подтверждена или похожа на выдумку. Используй только проверенные пункты.'],
     low: ['Не доверяй без проверки', 'В ответе есть ошибки или сильные признаки выдумки. Не копируй его в работу как есть.'],
     none: ['Нечего проверять', 'В тексте нет фактических утверждений: только мнения и общие фразы.'],
@@ -133,8 +132,8 @@
     const { value, counts, level } = res.score;
     const total = res.claims.length;
     const C = 2 * Math.PI * 54, ring = value == null ? 0 : C * value / 100;
-    const gcol = level === 'high' ? 'var(--ok)' : level === 'mid' ? 'var(--risk)' : level === 'low' ? 'var(--bad)' : 'var(--neutral)';
-    const order = ['ok', 'check', 'risk', 'bad', 'opinion', 'neutral'];
+    const gcol = level === 'high' || level === 'clean' ? 'var(--ok)' : level === 'mid' ? 'var(--risk)' : level === 'low' ? 'var(--bad)' : 'var(--neutral)';
+    const order = ['ok', 'likely', 'check', 'risk', 'bad', 'opinion', 'neutral'];
     const busy = state.busy ? `<p class="note"><span class="spin"></span> Сверяем числа и даты с Википедией…</p>` : '';
 
     let marked = '', pos = 0;
@@ -145,7 +144,7 @@
     }
     marked += esc(state.text.slice(pos));
 
-    const F = { all: ['Все', () => true], problems: ['Ошибки и риски', c => ['bad', 'risk'].includes(c.verdict)], check: ['Проверить', c => c.verdict === 'check'], ok: ['Верно', c => c.verdict === 'ok'] };
+    const F = { all: ['Все', () => true], problems: ['Ошибки и риски', c => ['bad', 'risk'].includes(c.verdict)], check: ['Проверить', c => c.verdict === 'check'], ok: ['Верно', c => ['ok', 'likely'].includes(c.verdict)] };
     const shown = res.claims.filter(F[state.filter][1]);
 
     el.innerHTML = `

@@ -68,6 +68,11 @@ const TL = (() => {
     { when: [/(открыт[а-яa-z]* космос|выход[а-яa-z]* в космос|выш[а-яa-z]* в космос)/, /перв/], word: /леонов/, wrong: /(гагарин|армстронг|терешков|титов)/, year: [1965], fact: 'Первым в открытый космос вышел Алексей Леонов 18 марта 1965 года.', src: W('Леонов, Алексей Архипович') },
     { when: [/перв[а-яa-z]* женщин/, /космос/], word: /терешков/, wrong: /(савицк|ride|райд)/, year: [1963], fact: 'Первая женщина в космосе — Валентина Терешкова, 1963 год.', src: W('Терешкова, Валентина Владимировна') },
     { when: [/(армстронг|высадк[а-яa-z]* на луну|ступил[а-яa-z]* на луну|аполлон.?11|apollo.?11)/], year: [1969], fact: 'Высадка «Аполлона-11» на Луну и первый шаг Нила Армстронга — июль 1969 года.', src: W('Аполлон-11') },
+    { when: [/(диан|diana)/, /(погиб|умер|смерт|скончал|катастроф|авари|died|death|crash|killed)/], unless: /(расследован|дознан|inquest|investigat|годовщин|anniversar|спустя|later)/, year: [1997], fact: 'Принцесса Диана погибла 31 августа 1997 года в автокатастрофе в туннеле под мостом Альма в Париже.', src: 'https://www.britannica.com/biography/Diana-princess-of-Wales' },
+    { when: [/(диан|diana)/, /(погиб|умер|смерт|скончал|катастроф|авари|died|death|crash|killed)/], word: /(париж|paris)/, strict: false, fact: 'Авария, в которой погибла Диана, произошла в Париже.', src: 'https://www.britannica.com/biography/Diana-princess-of-Wales' },
+    { when: [/(диан|diana)/, /(лет|years old|возраст|aged)/, /(погиб|умер|смерт|скончал|было|died|was)/], unless: /(замуж|свадьб|married|родил|born)/, num: { vals: [36], tol: 0, min: 15, max: 99 }, fact: 'На момент гибели Диане было 36 лет.', src: 'https://www.britannica.com/biography/Diana-princess-of-Wales' },
+    { when: [/(похорон|funeral)/, /(диан|diana|вестминстер|westminster)/], year: [1997], fact: 'Похороны Дианы прошли 6 сентября 1997 года в Вестминстерском аббатстве.', src: 'https://www.bbc.co.uk/news/uk-40820488' },
+    { when: [/(диан|diana)/, /(родил|born)/], unless: /(сын|son|уильям|гарри|william|harry)/, year: [1961, 1997], fact: 'Диана Спенсер родилась 1 июля 1961 года.', src: 'https://www.britannica.com/biography/Diana-princess-of-Wales' },
     { when: [/колумб/, /америк/], year: [1492], fact: 'Колумб достиг Америки в 1492 году.', src: W('Открытие Америки') },
     { when: [/втор[а-яa-z]* миров[а-яa-z]* войн/], year: [1939, 1945], fact: 'Вторая мировая война шла с 1939 по 1945 год.', src: W('Вторая мировая война') },
     { when: [/перв[а-яa-z]* миров[а-яa-z]* войн/], year: [1914, 1918], fact: 'Первая мировая война шла с 1914 по 1918 год.', src: W('Первая мировая война') },
@@ -203,12 +208,12 @@ const TL = (() => {
     source: /(исследовани|ученые|ученых|эксперт|по данным|согласно|опубликова|журнал|университет|институт|study|research|according to|scientists|report)/,
     url: /(https?:\/\/\S+|www\.\S+)/,
     doi: /10\.\d{4,9}\/[^\s,;)]+/,
-    absolute: /(^|[^а-я])(всегда|никогда|все без исключения|стопроцентно|100\s?%|доказано|доказали|безусловно|абсолютно|гарантирован[а-яa-z]*|точно известно|без сомнени[а-яa-z]*|единственн[а-яa-z]*)([^а-я]|$)/,
+    absolute: /(^|[^а-я])(всегда|никогда|все без исключения|стопроцентно|100\s?%|доказано|доказали|безусловно|абсолютно|гарантирован[а-яa-z]*|точно известно|без сомнени[а-яa-z]*)([^а-я]|$)/,
     hedge: /(возможно|вероятно|по некоторым данным|считается|предположительно|может быть|не исключено|по оценкам|точных данных нет|не уверен)/,
     quote: /[«"„][^»"“]{12,}[»"“]/,
-    quoteVerb: /(сказал|говорил|писал|заявил|цитат|произнес|слова)/,
+    quoteVerb: /(сказал|говорил|писал|заявил|цитат|произнес|по словам|его слова|ее слова|said|wrote)/,
     fresh: /(сейчас|на данный момент|в этом году|в настоящее время|последн[а-яa-z]* (верси|данн|новост)|текущ[а-яa-z]*|недавно|на сегодня|свежи)/,
-    stakes: /(лекарств|вылеч|лечит|простуд|грипп|витамин|дозиров|доз[аеуы]\b|мг\b|таблет|диагноз|лечени|симптом|болезн|антибиотик|закон[а-яa-z]*|стать[а-яa-z]* \d+|штраф|налог|инвест|кредит|вклад)/,
+    stakes: /(лекарств|вылеч|лечит|простуд|грипп|витамин|дозиров|доз[аеуы]\b|мг\b|таблет|диагноз|лечени|симптом|болезн|антибиотик|(?:^|[^а-я])закон(?!ч)[а-яa-z]*|стать[а-яa-z]* \d+|штраф|налог|инвест|кредит|вклад)/,
     opinion: /(^|[^а-я])(я думаю|по-моему|мне кажется|на мой взгляд|лучше всего|рекомендую|советую|стоит|следует|нужно|важно|интересн[а-я]*|прекрасн[а-я]*|удивительн[а-я]*|лучш[а-я]*|худш[а-я]*|замечательн[а-я]*|рад помочь|надеюсь|вдохновля[а-я]*)([^а-я]|$)/,
     factVerb: /(\s—\s|самы[йея]|сама[яе]|сам[оу]е|являет|был[аои]?\b|находит|состоит|открыл|изобрел|написал|родил|основан|построен|составляет|насчитыва|произошл|начал|закончил|вышл|вышел|расположен|равн|весит|длит)/,
     future: /(прогноз|план|ожида|будет|планиру|к \d{4}|до \d{4}|станет|собираются)/,
@@ -224,7 +229,8 @@ const TL = (() => {
   function signals(c) {
     const s = [], n = c.n, nums = numbers(n);
     const hasLink = RX.url.test(c.text), doi = c.text.match(RX.doi);
-    const precise = nums.filter(x => !x.isYear && (x.decimals || (/%/.test(n) && x.v % 5 !== 0) || (x.v > 1000 && x.v % 100 !== 0)));
+    const approx = /(около|примерно|почти|более|больше|свыше|менее|меньше|порядка|приблизительно|about|around|over|nearly|approximately|more than|estimated)\s*$/;
+    const precise = nums.filter(x => !x.isYear && !/(тыс|млн|миллион|млрд|миллиард)/.test(x.raw) && !approx.test(n.slice(0, n.indexOf(x.raw))) && (x.decimals || (/%/.test(n) && x.v % 5 !== 0) || (x.v > 1000 && x.v % 100 !== 0)));
     const pct = /\d\s*%/.test(n);
     if (RX.source.test(n) && !hasLink && !doi) {
       if (pct || precise.length) s.push({ k: 'fake-stat', level: 'bad', title: 'Статистика со ссылкой «в никуда»', why: 'Упомянуто исследование или организация, но нет ссылки, авторов и названия работы. Так чаще всего выглядит выдуманная статистика.' });
@@ -239,7 +245,7 @@ const TL = (() => {
     if ((n.match(/\d+(?:[.,]\d+)?\s*%/g) || []).some(p => parseFloat(p) > 100)) s.push({ k: 'big-pct', level: 'warn', title: 'Процент больше 100', why: 'Рост «на 340%» и похожие цифры эффектно звучат, и потому их любят выдумывать. Нужен первоисточник.' });
     if (RX.absolute.test(n)) s.push({ k: 'absolute', level: 'warn', title: 'Категоричность', why: 'Слова вроде «всегда», «доказано», «единственный» редко бывают точными. Настоящие источники обычно формулируют осторожнее.' });
     if (RX.hedge.test(n)) s.push({ k: 'hedge', level: 'info', title: 'ИИ сам сомневается', why: 'Модель обозначила неуверенность. Это честно, но значит, что утверждение точно нужно проверить.' });
-    if (RX.quote.test(c.text) && (RX.quoteVerb.test(n) || /:\s*[«"„]/.test(c.text))) s.push({ k: 'quote', level: 'warn', title: 'Цитата известного человека', why: 'ИИ часто приписывает цитаты не тем людям или сочиняет их. Ищи цитату с указанием книги, речи или письма.' });
+    if (RX.quote.test(c.text) && (c.text.match(RX.quote)[0].trim().split(/\s+/).length >= 4) && (RX.quoteVerb.test(n) || /:\s*[«"„]/.test(c.text))) s.push({ k: 'quote', level: 'warn', title: 'Цитата известного человека', why: 'ИИ часто приписывает цитаты не тем людям или сочиняет их. Ищи цитату с указанием книги, речи или письма.' });
     const fut = years(n).filter(y => y > NOW_YEAR);
     if (fut.length && !RX.future.test(n)) s.push({ k: 'future', level: 'bad', title: 'Дата из будущего', why: `Событие в ${fut[0]} году описано как уже произошедшее.` });
     if (RX.fresh.test(n) && nums.length) s.push({ k: 'fresh', level: 'bad', title: 'Устаревшие данные', why: 'Ответ называет «текущее» значение. У модели есть дата среза знаний, и то, что для неё «сейчас», могло давно измениться.' });
@@ -264,7 +270,7 @@ const TL = (() => {
     const info = claims.map(c => ({ ents: new Set(properNouns(c.text).map(w => norm(w).slice(0, 5))), ys: years(c.n), ev: EVENTS.filter(e => c.n.includes(e)) }));
     for (let i = 0; i < claims.length; i++) for (let j = i + 1; j < claims.length; j++) {
       const a = info[i], b = info[j];
-      if (!a.ys.length || !b.ys.length) continue;
+      if (a.ys.length !== 1 || b.ys.length !== 1) continue;
       if (![...a.ents].some(e => b.ents.has(e))) continue;
       if (!a.ev.some(e => b.ev.includes(e))) continue;
       if (a.ys.some(y => b.ys.includes(y))) continue;
@@ -279,7 +285,8 @@ const TL = (() => {
     ok: { label: 'Подтверждено', short: 'Верно', w: 1 },
     bad: { label: 'Ошибка', short: 'Ошибка', w: 0 },
     risk: { label: 'Похоже на выдумку', short: 'Выдумка?', w: 0.25 },
-    check: { label: 'Проверь сам', short: 'Проверить', w: 0.6 },
+    likely: { label: 'Совпадает с Википедией', short: 'Похоже на правду', w: 0.85 },
+    check: { label: 'Проверь сам', short: 'Проверить', w: 0.7 },
     opinion: { label: 'Мнение или совет', short: 'Мнение', w: null },
     neutral: { label: 'Не требует проверки', short: 'Нейтрально', w: null },
   };
@@ -303,7 +310,7 @@ const TL = (() => {
     const warn = c.sig.filter(s => s.level === 'warn');
     let v;
     if (con.length) v = c.checks.some(x => x.result === 'contradict' && x.partly) && !c.checks.some(x => x.result === 'contradict' && !x.partly) ? 'risk' : 'bad';
-    else if (sup.length && !bad.length) v = 'ok';
+    else if (sup.length && !bad.length) v = sup.every(x => x.soft) ? 'likely' : 'ok';
     else if (c.type === 'opinion') v = 'opinion';
     else if (c.type === 'neutral') v = 'neutral';
     else if (bad.length || warn.length >= 2) v = 'risk';
@@ -311,7 +318,8 @@ const TL = (() => {
 
     const why = [];
     if (v === 'bad') con.forEach(x => why.push((x.note ? x.note + '. ' : '') + x.fact));
-    if (v === 'ok') sup.forEach(x => why.push('Совпадает с проверенным источником: ' + x.fact));
+    if (v === 'ok') sup.filter(x => !x.soft).forEach(x => why.push('Совпадает с проверенным источником: ' + x.fact));
+    if (v === 'likely') sup.forEach(x => why.push(x.fact + ' Это хороший знак, но Википедию может править любой, поэтому это подсказка, а не доказательство.'));
     if (v === 'risk' && con.length) con.forEach(x => why.push(x.fact));
     c.sig.filter(s => s.level !== 'info' || v !== 'ok' || s.k.startsWith('link')).forEach(s => why.push(s.title + '. ' + s.why));
     if (v === 'check' && !why.length) why.push(c.type === 'factual-soft'
@@ -323,7 +331,8 @@ const TL = (() => {
     const how = [];
     if (v === 'ok') how.push('Факт подтверждён. Для важной работы всё равно укажи первоисточник, а не ИИ.');
     if (v === 'bad') how.push('Не используй это утверждение. Исправь по источнику ниже.');
-    if (v === 'risk' || v === 'check') {
+    if (v === 'likely') how.push('Открой статью и найди сноску к этой фразе: ссылайся на первоисточник из сноски или на источник из списка ниже, а не на Википедию.');
+    if (v === 'risk' || v === 'check' || v === 'likely') {
       if (c.sig.some(s => ['fake-stat', 'vague-source', 'doi'].includes(s.k))) how.push('Найди само исследование: автор, год, название журнала. Если его нет в Google Scholar, считай цифру выдуманной.');
       if (c.sig.some(s => s.k === 'quote')) how.push('Ищи цитату с указанием первоисточника: книги, речи, письма. Сайты с подборками цитат не считаются.');
       if (c.sig.some(s => s.k === 'stakes')) how.push('Сверь с официальным сайтом (Минздрав, закон, банк) или спроси специалиста.');
@@ -343,14 +352,14 @@ const TL = (() => {
     v -= Math.min(10, abs * 4);
     if (counts.bad) v = Math.min(v, 60 - Math.min(25, (counts.bad - 1) * 10));
     v = Math.max(0, Math.min(100, Math.round(v)));
-    const level = v >= 80 ? 'high' : v >= 55 ? 'mid' : 'low';
+    const level = !counts.bad && !counts.risk && v < 80 ? 'clean' : v >= 80 ? 'high' : v >= 55 ? 'mid' : 'low';
     return { value: v, counts, level };
   }
 
   function analyze(text) {
     const claims = splitClaims(text);
     claims.forEach((c, i) => {
-      if (i && /(^|[^а-я])(он|она|оно|они|его|ее|их|страна|страны|стране|страну|город|здесь|там|этот|эта|этого|этой)([^а-я]|$)/.test(c.n))
+      if (i && /(^|[^а-я])(он|она|оно|они|его|ее|их|ей|ему|им|ней|нем|страна|страны|стране|страну|город|здесь|там|этот|эта|этого|этой)([^а-я]|$)/.test(c.n))
         c.ctx = norm(properNouns(claims[i - 1].text, true).join(' ') + ' ' + (claims[i - 1].ctx || ''));
     });
     claims.forEach(c => { c.sig = signals(c); c.checks = [...checkFacts(c), ...checkMath(c)]; });

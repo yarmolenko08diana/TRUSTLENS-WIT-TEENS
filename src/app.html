@@ -7,7 +7,7 @@
 :root{
   --bg:#EEF1F5; --surface:#FFFFFF; --surface-2:#F6F8FB; --ink:#101826; --muted:#586477; --line:#D6DCE5;
   --accent:#2448D8; --accent-ink:#FFFFFF; --accent-soft:#E3E9FF;
-  --ok:#17854A; --bad:#C8352A; --risk:#D06A0C; --check:#A07C00; --opinion:#7349C8; --neutral:#7D8899;
+  --ok:#17854A; --likely:#1D7F86; --bad:#C8352A; --risk:#D06A0C; --check:#A07C00; --opinion:#7349C8; --neutral:#7D8899;
   --shadow:0 1px 2px rgba(16,24,38,.06),0 6px 24px rgba(16,24,38,.06);
   --display:"Unbounded","Golos Text",system-ui,sans-serif;
   --body:"Golos Text",system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;
@@ -17,14 +17,14 @@
   color-scheme:dark;
   --bg:#0C1119; --surface:#141B26; --surface-2:#19212E; --ink:#E6ECF4; --muted:#96A2B4; --line:#283346;
   --accent:#7D98FF; --accent-ink:#0C1119; --accent-soft:#1C2645;
-  --ok:#43C27C; --bad:#FF6E60; --risk:#FF9A3D; --check:#E2BE3E; --opinion:#B198FF; --neutral:#8792A4;
+  --ok:#43C27C; --likely:#4CC3C9; --bad:#FF6E60; --risk:#FF9A3D; --check:#E2BE3E; --opinion:#B198FF; --neutral:#8792A4;
   --shadow:0 1px 2px rgba(0,0,0,.3),0 8px 28px rgba(0,0,0,.25);
 }}
 :root[data-theme="dark"]{
   color-scheme:dark;
   --bg:#0C1119; --surface:#141B26; --surface-2:#19212E; --ink:#E6ECF4; --muted:#96A2B4; --line:#283346;
   --accent:#7D98FF; --accent-ink:#0C1119; --accent-soft:#1C2645;
-  --ok:#43C27C; --bad:#FF6E60; --risk:#FF9A3D; --check:#E2BE3E; --opinion:#B198FF; --neutral:#8792A4;
+  --ok:#43C27C; --likely:#4CC3C9; --bad:#FF6E60; --risk:#FF9A3D; --check:#E2BE3E; --opinion:#B198FF; --neutral:#8792A4;
   --shadow:0 1px 2px rgba(0,0,0,.3),0 8px 28px rgba(0,0,0,.25);
 }
 *{box-sizing:border-box}
@@ -102,6 +102,7 @@ textarea.field{min-height:230px;resize:vertical;line-height:1.55}
 .m{cursor:pointer;border-radius:3px;padding:1px 0;box-decoration-break:clone;-webkit-box-decoration-break:clone;border-bottom:2px solid transparent;transition:background .15s}
 .m sup{font-family:var(--mono);font-size:10px;font-weight:700;margin-right:2px;opacity:.8}
 .m.v-ok{background:color-mix(in srgb,var(--ok) 13%,transparent);border-color:var(--ok)}
+.m.v-likely{background:color-mix(in srgb,var(--likely) 12%,transparent);border-color:var(--likely);border-bottom-style:dashed}
 .m.v-bad{background:color-mix(in srgb,var(--bad) 15%,transparent);border-color:var(--bad);text-decoration:line-through;text-decoration-color:color-mix(in srgb,var(--bad) 55%,transparent)}
 .m.v-risk{background:color-mix(in srgb,var(--risk) 15%,transparent);border-color:var(--risk);border-bottom-style:dashed}
 .m.v-check{background:color-mix(in srgb,var(--check) 13%,transparent);border-color:var(--check);border-bottom-style:dotted}
@@ -124,7 +125,7 @@ textarea.field{min-height:230px;resize:vertical;line-height:1.55}
 .claim .links{display:flex;gap:6px;flex-wrap:wrap;margin-top:8px}
 .claim .links a{font-size:13px;text-decoration:none;border:1px solid var(--line);border-radius:8px;padding:4px 9px;background:var(--surface-2)}
 .claim .links a:hover{border-color:var(--accent)}
-.v-ok{--c:var(--ok)} .v-bad{--c:var(--bad)} .v-risk{--c:var(--risk)} .v-check{--c:var(--check)} .v-opinion{--c:var(--opinion)} .v-neutral{--c:var(--neutral)}
+.v-ok{--c:var(--ok)} .v-likely{--c:var(--likely)} .v-bad{--c:var(--bad)} .v-risk{--c:var(--risk)} .v-check{--c:var(--check)} .v-opinion{--c:var(--opinion)} .v-neutral{--c:var(--neutral)}
 .fix{margin-top:8px;padding:8px 10px;border-radius:8px;background:color-mix(in srgb,var(--ok) 10%,transparent);font-size:14px}
 .prompt-box{background:var(--surface-2);border:1px solid var(--line);border-radius:10px;padding:12px;font-family:var(--mono);font-size:12.5px;white-space:pre-wrap;max-height:220px;overflow:auto}
 .note{font-size:13px;color:var(--muted)}
@@ -306,7 +307,7 @@ th{font-size:12px;letter-spacing:.06em;text-transform:uppercase;color:var(--mute
         <div class="step"><b>Разбор на утверждения</b><span>Ответ делится на отдельные фразы. Каждая проверяется отдельно, потому что ошибка обычно прячется в одной детали среди правды.</span></div>
         <div class="step"><b>Тип утверждения</b><span>Факт, число, цитата, ссылка на исследование, мнение или совет. Мнение не проверяют как факт.</span></div>
         <div class="step"><b>Признаки выдумки</b><span>Выдуманные источники, слишком точные цифры, даты из будущего, категоричность, чужие цитаты, противоречия внутри ответа.</span></div>
-        <div class="step"><b>Сверка с источниками</b><span>Локальная база проверенных фактов, пересчёт математики, поиск по Википедии и каталог надёжных сайтов по теме.</span></div>
+        <div class="step"><b>Сверка с источниками</b><span>Локальная база проверенных фактов, пересчёт математики и каталог надёжных сайтов по теме. Википедия только подсказывает: найти там числа — хороший знак, но не доказательство, а не найти — не ошибка.</span></div>
         <div class="step"><b>Объяснение и оценка</b><span>Цвет для каждой фразы, причина, как проверить самому, ссылки и общий индекс доверия от 0 до 100.</span></div>
       </div>
     </div>
@@ -317,6 +318,7 @@ th{font-size:12px;letter-spacing:.06em;text-transform:uppercase;color:var(--mute
         <thead><tr><th>Метка</th><th>Когда ставим</th><th>Что делать</th></tr></thead>
         <tbody>
           <tr><td><span class="pill v-ok">Подтверждено</span></td><td>Совпадает с источником или верно посчитано</td><td>Можно использовать, указав первоисточник</td></tr>
+          <tr><td><span class="pill v-likely">Совпадает с Википедией</span></td><td>Те же числа и даты есть в статье Википедии</td><td>Найти сноску в статье и сослаться на первоисточник</td></tr>
           <tr><td><span class="pill v-bad">Ошибка</span></td><td>Противоречит источнику, известный миф, ошибка в расчёте</td><td>Не использовать, исправить по источнику</td></tr>
           <tr><td><span class="pill v-risk">Похоже на выдумку</span></td><td>Сильные признаки выдумки без подтверждения</td><td>Найти первоисточник, иначе не верить</td></tr>
           <tr><td><span class="pill v-check">Проверь сам</span></td><td>Проверяемый факт без подтверждения и без тревожных признаков</td><td>Сверить с двумя независимыми источниками</td></tr>
@@ -344,11 +346,30 @@ th{font-size:12px;letter-spacing:.06em;text-transform:uppercase;color:var(--mute
       </table></div>
     </div>
 
+
+    <div class="panel">
+      <h2>На чём и с помощью чего сделан проект</h2>
+      <p class="note">Честно перечисляем всё, чем пользовались при разработке, и зачем.</p>
+      <div class="tbl"><table>
+        <thead><tr><th>Инструмент</th><th>Зачем использовали</th></tr></thead>
+        <tbody>
+          <tr><td>Claude (Anthropic), режим Claude Code</td><td>ИИ-ассистент для программирования. Мы ставили задачи и проверяли результат, а Claude помогал писать код движка и интерфейса, искать ошибки, подбирать примеры и раунды тренажёра. У каждого факта в базе есть ссылка на источник, чтобы его мог перепроверить любой.</td></tr>
+          <tr><td>Claude: презентация</td><td>Помогал собрать слайды и текст выступления.</td></tr>
+          <tr><td>HTML, CSS, JavaScript</td><td>Сам сайт. Без фреймворков и сервера, поэтому он открывается в любом браузере и на телефоне.</td></tr>
+          <tr><td>Регулярные выражения и правила</td><td>Движок проверки работает без ИИ: каждое решение объясняется правилом, которое можно прочитать в коде.</td></tr>
+          <tr><td>Python и Node.js</td><td>Скрипт сборки <code>build.py</code> склеивает файлы из папки <code>src</code> в один <code>index.html</code>.</td></tr>
+          <tr><td>Node.js-тесты и Playwright с Chromium</td><td>Автопроверка: раунды тренажёра и правдивые тексты прогоняются через движок, а сайт открывается в браузере без экрана, чтобы найти ошибки до публикации.</td></tr>
+          <tr><td>Git, GitHub и GitHub Pages</td><td>Хранение кода, история изменений и бесплатный хостинг сайта.</td></tr>
+          <tr><td>Wikipedia API</td><td>Подсказка при проверке чисел и дат прямо в браузере.</td></tr>
+        </tbody>
+      </table></div>
+    </div>
+
     <div class="panel">
       <h2>Честно об ограничениях</h2>
       <div class="cols">
-        <div><h3>Что уже работает</h3><ul><li>Разбор ответа и 10 признаков ошибок и выдумки</li><li>База из 58 проверенных фактов школьной программы с источниками</li><li>Проверка арифметики и процентов</li><li>Сверка чисел и дат с Википедией</li><li>Надёжные источники по 12 темам к каждому утверждению</li><li>Оценка ссылок из ответа: официальный сайт, СМИ, блог или неизвестный</li><li>Готовый список источников для доклада</li><li>История проверок и тренажёр из 6 раундов</li></ul></div>
-        <div><h3>Чего мы не обещаем</h3><ul><li>Индекс доверия подсказывает, а не выносит приговор</li><li>Википедия тоже может ошибаться</li><li>База фактов пока небольшая, поэтому многие утверждения получат метку «Проверь сам» со ссылками на надёжные источники</li><li>«Проверь сам» значит «не нашли подтверждения», а не «ложь»</li></ul></div>
+        <div><h3>Что уже работает</h3><ul><li>Разбор ответа и 10 признаков ошибок и выдумки</li><li>База из 58 проверенных фактов школьной программы с источниками</li><li>Проверка арифметики и процентов</li><li>Подсказка из Википедии для чисел и дат, которая никогда не ставит «Ошибку»</li><li>Надёжные источники по 12 темам к каждому утверждению</li><li>Оценка ссылок из ответа: официальный сайт, СМИ, блог или неизвестный</li><li>Готовый список источников для доклада</li><li>История проверок и тренажёр из __NR__ раундов</li></ul></div>
+        <div><h3>Чего мы не обещаем</h3><ul><li>Индекс доверия подсказывает, а не выносит приговор</li><li>Википедию может править любой, поэтому мы используем её только как подсказку и отправляем к первоисточникам</li><li>База фактов пока небольшая, поэтому многие утверждения получат метку «Проверь сам» со ссылками на надёжные источники</li><li>«Проверь сам» значит «не нашли подтверждения», а не «ложь»</li></ul></div>
         <div><h3>Что дальше</h3><ul><li>Расширение для браузера поверх ChatGPT и Gemini</li><li>Telegram-бот для быстрой проверки</li><li>Открытая база фактов, которую пополняют учителя</li><li>Казахский и английский языки</li><li>Режим учителя: проверка рефератов на следы ИИ-ошибок</li></ul></div>
       </div>
     </div>

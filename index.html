@@ -9,7 +9,7 @@
 :root{
   --bg:#EEF1F5; --surface:#FFFFFF; --surface-2:#F6F8FB; --ink:#101826; --muted:#586477; --line:#D6DCE5;
   --accent:#2448D8; --accent-ink:#FFFFFF; --accent-soft:#E3E9FF;
-  --ok:#17854A; --bad:#C8352A; --risk:#D06A0C; --check:#A07C00; --opinion:#7349C8; --neutral:#7D8899;
+  --ok:#17854A; --likely:#1D7F86; --bad:#C8352A; --risk:#D06A0C; --check:#A07C00; --opinion:#7349C8; --neutral:#7D8899;
   --shadow:0 1px 2px rgba(16,24,38,.06),0 6px 24px rgba(16,24,38,.06);
   --display:"Unbounded","Golos Text",system-ui,sans-serif;
   --body:"Golos Text",system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;
@@ -19,14 +19,14 @@
   color-scheme:dark;
   --bg:#0C1119; --surface:#141B26; --surface-2:#19212E; --ink:#E6ECF4; --muted:#96A2B4; --line:#283346;
   --accent:#7D98FF; --accent-ink:#0C1119; --accent-soft:#1C2645;
-  --ok:#43C27C; --bad:#FF6E60; --risk:#FF9A3D; --check:#E2BE3E; --opinion:#B198FF; --neutral:#8792A4;
+  --ok:#43C27C; --likely:#4CC3C9; --bad:#FF6E60; --risk:#FF9A3D; --check:#E2BE3E; --opinion:#B198FF; --neutral:#8792A4;
   --shadow:0 1px 2px rgba(0,0,0,.3),0 8px 28px rgba(0,0,0,.25);
 }}
 :root[data-theme="dark"]{
   color-scheme:dark;
   --bg:#0C1119; --surface:#141B26; --surface-2:#19212E; --ink:#E6ECF4; --muted:#96A2B4; --line:#283346;
   --accent:#7D98FF; --accent-ink:#0C1119; --accent-soft:#1C2645;
-  --ok:#43C27C; --bad:#FF6E60; --risk:#FF9A3D; --check:#E2BE3E; --opinion:#B198FF; --neutral:#8792A4;
+  --ok:#43C27C; --likely:#4CC3C9; --bad:#FF6E60; --risk:#FF9A3D; --check:#E2BE3E; --opinion:#B198FF; --neutral:#8792A4;
   --shadow:0 1px 2px rgba(0,0,0,.3),0 8px 28px rgba(0,0,0,.25);
 }
 *{box-sizing:border-box}
@@ -104,6 +104,7 @@ textarea.field{min-height:230px;resize:vertical;line-height:1.55}
 .m{cursor:pointer;border-radius:3px;padding:1px 0;box-decoration-break:clone;-webkit-box-decoration-break:clone;border-bottom:2px solid transparent;transition:background .15s}
 .m sup{font-family:var(--mono);font-size:10px;font-weight:700;margin-right:2px;opacity:.8}
 .m.v-ok{background:color-mix(in srgb,var(--ok) 13%,transparent);border-color:var(--ok)}
+.m.v-likely{background:color-mix(in srgb,var(--likely) 12%,transparent);border-color:var(--likely);border-bottom-style:dashed}
 .m.v-bad{background:color-mix(in srgb,var(--bad) 15%,transparent);border-color:var(--bad);text-decoration:line-through;text-decoration-color:color-mix(in srgb,var(--bad) 55%,transparent)}
 .m.v-risk{background:color-mix(in srgb,var(--risk) 15%,transparent);border-color:var(--risk);border-bottom-style:dashed}
 .m.v-check{background:color-mix(in srgb,var(--check) 13%,transparent);border-color:var(--check);border-bottom-style:dotted}
@@ -126,7 +127,7 @@ textarea.field{min-height:230px;resize:vertical;line-height:1.55}
 .claim .links{display:flex;gap:6px;flex-wrap:wrap;margin-top:8px}
 .claim .links a{font-size:13px;text-decoration:none;border:1px solid var(--line);border-radius:8px;padding:4px 9px;background:var(--surface-2)}
 .claim .links a:hover{border-color:var(--accent)}
-.v-ok{--c:var(--ok)} .v-bad{--c:var(--bad)} .v-risk{--c:var(--risk)} .v-check{--c:var(--check)} .v-opinion{--c:var(--opinion)} .v-neutral{--c:var(--neutral)}
+.v-ok{--c:var(--ok)} .v-likely{--c:var(--likely)} .v-bad{--c:var(--bad)} .v-risk{--c:var(--risk)} .v-check{--c:var(--check)} .v-opinion{--c:var(--opinion)} .v-neutral{--c:var(--neutral)}
 .fix{margin-top:8px;padding:8px 10px;border-radius:8px;background:color-mix(in srgb,var(--ok) 10%,transparent);font-size:14px}
 .prompt-box{background:var(--surface-2);border:1px solid var(--line);border-radius:10px;padding:12px;font-family:var(--mono);font-size:12.5px;white-space:pre-wrap;max-height:220px;overflow:auto}
 .note{font-size:13px;color:var(--muted)}
@@ -308,7 +309,7 @@ th{font-size:12px;letter-spacing:.06em;text-transform:uppercase;color:var(--mute
         <div class="step"><b>Разбор на утверждения</b><span>Ответ делится на отдельные фразы. Каждая проверяется отдельно, потому что ошибка обычно прячется в одной детали среди правды.</span></div>
         <div class="step"><b>Тип утверждения</b><span>Факт, число, цитата, ссылка на исследование, мнение или совет. Мнение не проверяют как факт.</span></div>
         <div class="step"><b>Признаки выдумки</b><span>Выдуманные источники, слишком точные цифры, даты из будущего, категоричность, чужие цитаты, противоречия внутри ответа.</span></div>
-        <div class="step"><b>Сверка с источниками</b><span>Локальная база проверенных фактов, пересчёт математики, поиск по Википедии и каталог надёжных сайтов по теме.</span></div>
+        <div class="step"><b>Сверка с источниками</b><span>Локальная база проверенных фактов, пересчёт математики и каталог надёжных сайтов по теме. Википедия только подсказывает: найти там числа — хороший знак, но не доказательство, а не найти — не ошибка.</span></div>
         <div class="step"><b>Объяснение и оценка</b><span>Цвет для каждой фразы, причина, как проверить самому, ссылки и общий индекс доверия от 0 до 100.</span></div>
       </div>
     </div>
@@ -319,6 +320,7 @@ th{font-size:12px;letter-spacing:.06em;text-transform:uppercase;color:var(--mute
         <thead><tr><th>Метка</th><th>Когда ставим</th><th>Что делать</th></tr></thead>
         <tbody>
           <tr><td><span class="pill v-ok">Подтверждено</span></td><td>Совпадает с источником или верно посчитано</td><td>Можно использовать, указав первоисточник</td></tr>
+          <tr><td><span class="pill v-likely">Совпадает с Википедией</span></td><td>Те же числа и даты есть в статье Википедии</td><td>Найти сноску в статье и сослаться на первоисточник</td></tr>
           <tr><td><span class="pill v-bad">Ошибка</span></td><td>Противоречит источнику, известный миф, ошибка в расчёте</td><td>Не использовать, исправить по источнику</td></tr>
           <tr><td><span class="pill v-risk">Похоже на выдумку</span></td><td>Сильные признаки выдумки без подтверждения</td><td>Найти первоисточник, иначе не верить</td></tr>
           <tr><td><span class="pill v-check">Проверь сам</span></td><td>Проверяемый факт без подтверждения и без тревожных признаков</td><td>Сверить с двумя независимыми источниками</td></tr>
@@ -346,11 +348,30 @@ th{font-size:12px;letter-spacing:.06em;text-transform:uppercase;color:var(--mute
       </table></div>
     </div>
 
+
+    <div class="panel">
+      <h2>На чём и с помощью чего сделан проект</h2>
+      <p class="note">Честно перечисляем всё, чем пользовались при разработке, и зачем.</p>
+      <div class="tbl"><table>
+        <thead><tr><th>Инструмент</th><th>Зачем использовали</th></tr></thead>
+        <tbody>
+          <tr><td>Claude (Anthropic), режим Claude Code</td><td>ИИ-ассистент для программирования. Мы ставили задачи и проверяли результат, а Claude помогал писать код движка и интерфейса, искать ошибки, подбирать примеры и раунды тренажёра. У каждого факта в базе есть ссылка на источник, чтобы его мог перепроверить любой.</td></tr>
+          <tr><td>Claude: презентация</td><td>Помогал собрать слайды и текст выступления.</td></tr>
+          <tr><td>HTML, CSS, JavaScript</td><td>Сам сайт. Без фреймворков и сервера, поэтому он открывается в любом браузере и на телефоне.</td></tr>
+          <tr><td>Регулярные выражения и правила</td><td>Движок проверки работает без ИИ: каждое решение объясняется правилом, которое можно прочитать в коде.</td></tr>
+          <tr><td>Python и Node.js</td><td>Скрипт сборки <code>build.py</code> склеивает файлы из папки <code>src</code> в один <code>index.html</code>.</td></tr>
+          <tr><td>Node.js-тесты и Playwright с Chromium</td><td>Автопроверка: раунды тренажёра и правдивые тексты прогоняются через движок, а сайт открывается в браузере без экрана, чтобы найти ошибки до публикации.</td></tr>
+          <tr><td>Git, GitHub и GitHub Pages</td><td>Хранение кода, история изменений и бесплатный хостинг сайта.</td></tr>
+          <tr><td>Wikipedia API</td><td>Подсказка при проверке чисел и дат прямо в браузере.</td></tr>
+        </tbody>
+      </table></div>
+    </div>
+
     <div class="panel">
       <h2>Честно об ограничениях</h2>
       <div class="cols">
-        <div><h3>Что уже работает</h3><ul><li>Разбор ответа и 10 признаков ошибок и выдумки</li><li>База из 67 проверенных фактов школьной программы с источниками</li><li>Проверка арифметики и процентов</li><li>Сверка чисел и дат с Википедией</li><li>Надёжные источники по 12 темам к каждому утверждению</li><li>Оценка ссылок из ответа: официальный сайт, СМИ, блог или неизвестный</li><li>Готовый список источников для доклада</li><li>История проверок и тренажёр из 6 раундов</li></ul></div>
-        <div><h3>Чего мы не обещаем</h3><ul><li>Индекс доверия подсказывает, а не выносит приговор</li><li>Википедия тоже может ошибаться</li><li>База фактов пока небольшая, поэтому многие утверждения получат метку «Проверь сам» со ссылками на надёжные источники</li><li>«Проверь сам» значит «не нашли подтверждения», а не «ложь»</li></ul></div>
+        <div><h3>Что уже работает</h3><ul><li>Разбор ответа и 10 признаков ошибок и выдумки</li><li>База из 72 проверенных фактов школьной программы с источниками</li><li>Проверка арифметики и процентов</li><li>Подсказка из Википедии для чисел и дат, которая никогда не ставит «Ошибку»</li><li>Надёжные источники по 12 темам к каждому утверждению</li><li>Оценка ссылок из ответа: официальный сайт, СМИ, блог или неизвестный</li><li>Готовый список источников для доклада</li><li>История проверок и тренажёр из 14 раундов</li></ul></div>
+        <div><h3>Чего мы не обещаем</h3><ul><li>Индекс доверия подсказывает, а не выносит приговор</li><li>Википедию может править любой, поэтому мы используем её только как подсказку и отправляем к первоисточникам</li><li>База фактов пока небольшая, поэтому многие утверждения получат метку «Проверь сам» со ссылками на надёжные источники</li><li>«Проверь сам» значит «не нашли подтверждения», а не «ложь»</li></ul></div>
         <div><h3>Что дальше</h3><ul><li>Расширение для браузера поверх ChatGPT и Gemini</li><li>Telegram-бот для быстрой проверки</li><li>Открытая база фактов, которую пополняют учителя</li><li>Казахский и английский языки</li><li>Режим учителя: проверка рефератов на следы ИИ-ошибок</li></ul></div>
       </div>
     </div>
@@ -518,6 +539,11 @@ const TL = (() => {
     { when: [/(открыт[а-яa-z]* космос|выход[а-яa-z]* в космос|выш[а-яa-z]* в космос)/, /перв/], word: /леонов/, wrong: /(гагарин|армстронг|терешков|титов)/, year: [1965], fact: 'Первым в открытый космос вышел Алексей Леонов 18 марта 1965 года.', src: W('Леонов, Алексей Архипович') },
     { when: [/перв[а-яa-z]* женщин/, /космос/], word: /терешков/, wrong: /(савицк|ride|райд)/, year: [1963], fact: 'Первая женщина в космосе — Валентина Терешкова, 1963 год.', src: W('Терешкова, Валентина Владимировна') },
     { when: [/(армстронг|высадк[а-яa-z]* на луну|ступил[а-яa-z]* на луну|аполлон.?11|apollo.?11)/], year: [1969], fact: 'Высадка «Аполлона-11» на Луну и первый шаг Нила Армстронга — июль 1969 года.', src: W('Аполлон-11') },
+    { when: [/(диан|diana)/, /(погиб|умер|смерт|скончал|катастроф|авари|died|death|crash|killed)/], unless: /(расследован|дознан|inquest|investigat|годовщин|anniversar|спустя|later)/, year: [1997], fact: 'Принцесса Диана погибла 31 августа 1997 года в автокатастрофе в туннеле под мостом Альма в Париже.', src: 'https://www.britannica.com/biography/Diana-princess-of-Wales' },
+    { when: [/(диан|diana)/, /(погиб|умер|смерт|скончал|катастроф|авари|died|death|crash|killed)/], word: /(париж|paris)/, strict: false, fact: 'Авария, в которой погибла Диана, произошла в Париже.', src: 'https://www.britannica.com/biography/Diana-princess-of-Wales' },
+    { when: [/(диан|diana)/, /(лет|years old|возраст|aged)/, /(погиб|умер|смерт|скончал|было|died|was)/], unless: /(замуж|свадьб|married|родил|born)/, num: { vals: [36], tol: 0, min: 15, max: 99 }, fact: 'На момент гибели Диане было 36 лет.', src: 'https://www.britannica.com/biography/Diana-princess-of-Wales' },
+    { when: [/(похорон|funeral)/, /(диан|diana|вестминстер|westminster)/], year: [1997], fact: 'Похороны Дианы прошли 6 сентября 1997 года в Вестминстерском аббатстве.', src: 'https://www.bbc.co.uk/news/uk-40820488' },
+    { when: [/(диан|diana)/, /(родил|born)/], unless: /(сын|son|уильям|гарри|william|harry)/, year: [1961, 1997], fact: 'Диана Спенсер родилась 1 июля 1961 года.', src: 'https://www.britannica.com/biography/Diana-princess-of-Wales' },
     { when: [/колумб/, /америк/], year: [1492], fact: 'Колумб достиг Америки в 1492 году.', src: W('Открытие Америки') },
     { when: [/втор[а-яa-z]* миров[а-яa-z]* войн/], year: [1939, 1945], fact: 'Вторая мировая война шла с 1939 по 1945 год.', src: W('Вторая мировая война') },
     { when: [/перв[а-яa-z]* миров[а-яa-z]* войн/], year: [1914, 1918], fact: 'Первая мировая война шла с 1914 по 1918 год.', src: W('Первая мировая война') },
@@ -653,12 +679,12 @@ const TL = (() => {
     source: /(исследовани|ученые|ученых|эксперт|по данным|согласно|опубликова|журнал|университет|институт|study|research|according to|scientists|report)/,
     url: /(https?:\/\/\S+|www\.\S+)/,
     doi: /10\.\d{4,9}\/[^\s,;)]+/,
-    absolute: /(^|[^а-я])(всегда|никогда|все без исключения|стопроцентно|100\s?%|доказано|доказали|безусловно|абсолютно|гарантирован[а-яa-z]*|точно известно|без сомнени[а-яa-z]*|единственн[а-яa-z]*)([^а-я]|$)/,
+    absolute: /(^|[^а-я])(всегда|никогда|все без исключения|стопроцентно|100\s?%|доказано|доказали|безусловно|абсолютно|гарантирован[а-яa-z]*|точно известно|без сомнени[а-яa-z]*)([^а-я]|$)/,
     hedge: /(возможно|вероятно|по некоторым данным|считается|предположительно|может быть|не исключено|по оценкам|точных данных нет|не уверен)/,
     quote: /[«"„][^»"“]{12,}[»"“]/,
-    quoteVerb: /(сказал|говорил|писал|заявил|цитат|произнес|слова)/,
+    quoteVerb: /(сказал|говорил|писал|заявил|цитат|произнес|по словам|его слова|ее слова|said|wrote)/,
     fresh: /(сейчас|на данный момент|в этом году|в настоящее время|последн[а-яa-z]* (верси|данн|новост)|текущ[а-яa-z]*|недавно|на сегодня|свежи)/,
-    stakes: /(лекарств|вылеч|лечит|простуд|грипп|витамин|дозиров|доз[аеуы]\b|мг\b|таблет|диагноз|лечени|симптом|болезн|антибиотик|закон[а-яa-z]*|стать[а-яa-z]* \d+|штраф|налог|инвест|кредит|вклад)/,
+    stakes: /(лекарств|вылеч|лечит|простуд|грипп|витамин|дозиров|доз[аеуы]\b|мг\b|таблет|диагноз|лечени|симптом|болезн|антибиотик|(?:^|[^а-я])закон(?!ч)[а-яa-z]*|стать[а-яa-z]* \d+|штраф|налог|инвест|кредит|вклад)/,
     opinion: /(^|[^а-я])(я думаю|по-моему|мне кажется|на мой взгляд|лучше всего|рекомендую|советую|стоит|следует|нужно|важно|интересн[а-я]*|прекрасн[а-я]*|удивительн[а-я]*|лучш[а-я]*|худш[а-я]*|замечательн[а-я]*|рад помочь|надеюсь|вдохновля[а-я]*)([^а-я]|$)/,
     factVerb: /(\s—\s|самы[йея]|сама[яе]|сам[оу]е|являет|был[аои]?\b|находит|состоит|открыл|изобрел|написал|родил|основан|построен|составляет|насчитыва|произошл|начал|закончил|вышл|вышел|расположен|равн|весит|длит)/,
     future: /(прогноз|план|ожида|будет|планиру|к \d{4}|до \d{4}|станет|собираются)/,
@@ -674,7 +700,8 @@ const TL = (() => {
   function signals(c) {
     const s = [], n = c.n, nums = numbers(n);
     const hasLink = RX.url.test(c.text), doi = c.text.match(RX.doi);
-    const precise = nums.filter(x => !x.isYear && (x.decimals || (/%/.test(n) && x.v % 5 !== 0) || (x.v > 1000 && x.v % 100 !== 0)));
+    const approx = /(около|примерно|почти|более|больше|свыше|менее|меньше|порядка|приблизительно|about|around|over|nearly|approximately|more than|estimated)\s*$/;
+    const precise = nums.filter(x => !x.isYear && !/(тыс|млн|миллион|млрд|миллиард)/.test(x.raw) && !approx.test(n.slice(0, n.indexOf(x.raw))) && (x.decimals || (/%/.test(n) && x.v % 5 !== 0) || (x.v > 1000 && x.v % 100 !== 0)));
     const pct = /\d\s*%/.test(n);
     if (RX.source.test(n) && !hasLink && !doi) {
       if (pct || precise.length) s.push({ k: 'fake-stat', level: 'bad', title: 'Статистика со ссылкой «в никуда»', why: 'Упомянуто исследование или организация, но нет ссылки, авторов и названия работы. Так чаще всего выглядит выдуманная статистика.' });
@@ -689,7 +716,7 @@ const TL = (() => {
     if ((n.match(/\d+(?:[.,]\d+)?\s*%/g) || []).some(p => parseFloat(p) > 100)) s.push({ k: 'big-pct', level: 'warn', title: 'Процент больше 100', why: 'Рост «на 340%» и похожие цифры эффектно звучат, и потому их любят выдумывать. Нужен первоисточник.' });
     if (RX.absolute.test(n)) s.push({ k: 'absolute', level: 'warn', title: 'Категоричность', why: 'Слова вроде «всегда», «доказано», «единственный» редко бывают точными. Настоящие источники обычно формулируют осторожнее.' });
     if (RX.hedge.test(n)) s.push({ k: 'hedge', level: 'info', title: 'ИИ сам сомневается', why: 'Модель обозначила неуверенность. Это честно, но значит, что утверждение точно нужно проверить.' });
-    if (RX.quote.test(c.text) && (RX.quoteVerb.test(n) || /:\s*[«"„]/.test(c.text))) s.push({ k: 'quote', level: 'warn', title: 'Цитата известного человека', why: 'ИИ часто приписывает цитаты не тем людям или сочиняет их. Ищи цитату с указанием книги, речи или письма.' });
+    if (RX.quote.test(c.text) && (c.text.match(RX.quote)[0].trim().split(/\s+/).length >= 4) && (RX.quoteVerb.test(n) || /:\s*[«"„]/.test(c.text))) s.push({ k: 'quote', level: 'warn', title: 'Цитата известного человека', why: 'ИИ часто приписывает цитаты не тем людям или сочиняет их. Ищи цитату с указанием книги, речи или письма.' });
     const fut = years(n).filter(y => y > NOW_YEAR);
     if (fut.length && !RX.future.test(n)) s.push({ k: 'future', level: 'bad', title: 'Дата из будущего', why: `Событие в ${fut[0]} году описано как уже произошедшее.` });
     if (RX.fresh.test(n) && nums.length) s.push({ k: 'fresh', level: 'bad', title: 'Устаревшие данные', why: 'Ответ называет «текущее» значение. У модели есть дата среза знаний, и то, что для неё «сейчас», могло давно измениться.' });
@@ -714,7 +741,7 @@ const TL = (() => {
     const info = claims.map(c => ({ ents: new Set(properNouns(c.text).map(w => norm(w).slice(0, 5))), ys: years(c.n), ev: EVENTS.filter(e => c.n.includes(e)) }));
     for (let i = 0; i < claims.length; i++) for (let j = i + 1; j < claims.length; j++) {
       const a = info[i], b = info[j];
-      if (!a.ys.length || !b.ys.length) continue;
+      if (a.ys.length !== 1 || b.ys.length !== 1) continue;
       if (![...a.ents].some(e => b.ents.has(e))) continue;
       if (!a.ev.some(e => b.ev.includes(e))) continue;
       if (a.ys.some(y => b.ys.includes(y))) continue;
@@ -729,7 +756,8 @@ const TL = (() => {
     ok: { label: 'Подтверждено', short: 'Верно', w: 1 },
     bad: { label: 'Ошибка', short: 'Ошибка', w: 0 },
     risk: { label: 'Похоже на выдумку', short: 'Выдумка?', w: 0.25 },
-    check: { label: 'Проверь сам', short: 'Проверить', w: 0.6 },
+    likely: { label: 'Совпадает с Википедией', short: 'Похоже на правду', w: 0.85 },
+    check: { label: 'Проверь сам', short: 'Проверить', w: 0.7 },
     opinion: { label: 'Мнение или совет', short: 'Мнение', w: null },
     neutral: { label: 'Не требует проверки', short: 'Нейтрально', w: null },
   };
@@ -753,7 +781,7 @@ const TL = (() => {
     const warn = c.sig.filter(s => s.level === 'warn');
     let v;
     if (con.length) v = c.checks.some(x => x.result === 'contradict' && x.partly) && !c.checks.some(x => x.result === 'contradict' && !x.partly) ? 'risk' : 'bad';
-    else if (sup.length && !bad.length) v = 'ok';
+    else if (sup.length && !bad.length) v = sup.every(x => x.soft) ? 'likely' : 'ok';
     else if (c.type === 'opinion') v = 'opinion';
     else if (c.type === 'neutral') v = 'neutral';
     else if (bad.length || warn.length >= 2) v = 'risk';
@@ -761,7 +789,8 @@ const TL = (() => {
 
     const why = [];
     if (v === 'bad') con.forEach(x => why.push((x.note ? x.note + '. ' : '') + x.fact));
-    if (v === 'ok') sup.forEach(x => why.push('Совпадает с проверенным источником: ' + x.fact));
+    if (v === 'ok') sup.filter(x => !x.soft).forEach(x => why.push('Совпадает с проверенным источником: ' + x.fact));
+    if (v === 'likely') sup.forEach(x => why.push(x.fact + ' Это хороший знак, но Википедию может править любой, поэтому это подсказка, а не доказательство.'));
     if (v === 'risk' && con.length) con.forEach(x => why.push(x.fact));
     c.sig.filter(s => s.level !== 'info' || v !== 'ok' || s.k.startsWith('link')).forEach(s => why.push(s.title + '. ' + s.why));
     if (v === 'check' && !why.length) why.push(c.type === 'factual-soft'
@@ -773,7 +802,8 @@ const TL = (() => {
     const how = [];
     if (v === 'ok') how.push('Факт подтверждён. Для важной работы всё равно укажи первоисточник, а не ИИ.');
     if (v === 'bad') how.push('Не используй это утверждение. Исправь по источнику ниже.');
-    if (v === 'risk' || v === 'check') {
+    if (v === 'likely') how.push('Открой статью и найди сноску к этой фразе: ссылайся на первоисточник из сноски или на источник из списка ниже, а не на Википедию.');
+    if (v === 'risk' || v === 'check' || v === 'likely') {
       if (c.sig.some(s => ['fake-stat', 'vague-source', 'doi'].includes(s.k))) how.push('Найди само исследование: автор, год, название журнала. Если его нет в Google Scholar, считай цифру выдуманной.');
       if (c.sig.some(s => s.k === 'quote')) how.push('Ищи цитату с указанием первоисточника: книги, речи, письма. Сайты с подборками цитат не считаются.');
       if (c.sig.some(s => s.k === 'stakes')) how.push('Сверь с официальным сайтом (Минздрав, закон, банк) или спроси специалиста.');
@@ -793,14 +823,14 @@ const TL = (() => {
     v -= Math.min(10, abs * 4);
     if (counts.bad) v = Math.min(v, 60 - Math.min(25, (counts.bad - 1) * 10));
     v = Math.max(0, Math.min(100, Math.round(v)));
-    const level = v >= 80 ? 'high' : v >= 55 ? 'mid' : 'low';
+    const level = !counts.bad && !counts.risk && v < 80 ? 'clean' : v >= 80 ? 'high' : v >= 55 ? 'mid' : 'low';
     return { value: v, counts, level };
   }
 
   function analyze(text) {
     const claims = splitClaims(text);
     claims.forEach((c, i) => {
-      if (i && /(^|[^а-я])(он|она|оно|они|его|ее|их|страна|страны|стране|страну|город|здесь|там|этот|эта|этого|этой)([^а-я]|$)/.test(c.n))
+      if (i && /(^|[^а-я])(он|она|оно|они|его|ее|их|ей|ему|им|ней|нем|страна|страны|стране|страну|город|здесь|там|этот|эта|этого|этой)([^а-я]|$)/.test(c.n))
         c.ctx = norm(properNouns(claims[i - 1].text, true).join(' ') + ' ' + (claims[i - 1].ctx || ''));
     });
     claims.forEach(c => { c.sig = signals(c); c.checks = [...checkFacts(c), ...checkMath(c)]; });
@@ -836,6 +866,11 @@ if (typeof module !== 'undefined') module.exports = TL;
 15% от 200 — это 45.
 Согласно статье в журнале Nature, школьники, которые учатся с ИИ, запоминают материал на 340% лучше.
 Учёные доказали, что человек использует только 10% мозга.`,
+  },
+  {
+    title: 'Правдивый текст: принцесса Диана',
+    q: 'Расскажи, как погибла принцесса Диана.',
+    text: `Принцесса Диана погибла 31 августа 1997 года в автокатастрофе в Париже. Авария произошла в туннеле под мостом Альма около 00:25 по местному времени. Вместе с ней погибли её спутник Доди аль-Файед и водитель Анри Поль. Единственным выжившим был телохранитель Тревор Рис-Джонс, который получил тяжёлые травмы. Диану доставили в больницу Питье-Сальпетриер, где она скончалась около 4 часов утра. Ей было 36 лет. Французское расследование пришло к выводу, что водитель находился в состоянии алкогольного опьянения и превысил скорость, пытаясь оторваться от папарацци. В 2008 году британское дознание (Operation Paget) установило, что смерть была результатом «незаконного убийства» по грубой неосторожности водителя и преследовавших машину фотографов. Похороны состоялись 6 сентября 1997 года в Вестминстерском аббатстве, их посмотрели около 2,5 миллиарда человек по всему миру. Элтон Джон исполнил песню «Candle in the Wind 1997», которая стала одним из самых продаваемых синглов в истории. Диана похоронена в родовом поместье Спенсеров Олторп.`,
   },
   {
     title: 'Честный ответ',
@@ -1036,7 +1071,7 @@ if (typeof module !== 'undefined') module.exports = EXAMPLES; if (typeof module 
   function renderEngines() {
     const row = (st, name, msg) => `<div class="eng"><i class="dot ${st}"></i><span><b>${name}</b> <span class="m">${msg}</span></span></div>`;
     const wikiMsg = { on: 'сверяем числа и даты', off: 'откроется в полной версии сайта', wait: 'проверяем доступ…' }[eng.wiki];
-    $('#engines').innerHTML = row('on', 'База фактов', `${TL.FACTS.length} проверенных фактов`) + row('on', 'Математика', 'пересчёт вычислений и процентов') + row('on', 'Признаки выдумки', '10 сигналов и проверка ссылок') + row('on', 'Надёжные источники', `${Object.keys(SRC.S).length} проверенных сайтов по ${SRC.TOPICS.length} темам`) + row(eng.wiki, 'Википедия', wikiMsg);
+    $('#engines').innerHTML = row('on', 'База фактов', `${TL.FACTS.length} проверенных фактов`) + row('on', 'Математика', 'пересчёт вычислений и процентов') + row('on', 'Признаки выдумки', '10 сигналов и проверка ссылок') + row('on', 'Надёжные источники', `${Object.keys(SRC.S).length} проверенных сайтов по ${SRC.TOPICS.length} темам`) + row(eng.wiki, 'Википедия (подсказка)', wikiMsg);
   }
 
   async function detectWiki() {
@@ -1119,9 +1154,7 @@ if (typeof module !== 'undefined') module.exports = EXAMPLES; if (typeof module 
         const found = nums.filter(x => variants(x).some(v => ext.includes(v)));
         if (found.length === nums.length) {
           const sn = snippet(page.extract.replace(/[  ]/g, ' '), variants(found[0]).find(v => ext.includes(v)));
-          c.checks.push({ src: 'Википедия', result: 'support', fact: `В статье «${page.title}» те же цифры${sn ? ': «' + sn + '»' : '.'}`, link: page.fullurl });
-        } else if (!found.length) {
-          c.sig.push({ k: 'wiki-miss', level: 'warn', title: 'Не нашли цифры в Википедии', why: `В статье «${page.title}» нет чисел ${nums.map(x => x.raw).join(', ')}. Это не доказывает ошибку, но повод проверить.`, link: page.fullurl });
+          c.checks.push({ src: 'Википедия', result: 'support', soft: true, fact: `В статье «${page.title}» те же цифры${sn ? ': «' + sn + '»' : '.'}`, link: page.fullurl });
         }
       } catch {}
     }));
@@ -1129,9 +1162,10 @@ if (typeof module !== 'undefined') module.exports = EXAMPLES; if (typeof module 
   }
 
   /* ---------- report rendering ---------- */
-  const COLORS = { ok: 'var(--ok)', bad: 'var(--bad)', risk: 'var(--risk)', check: 'var(--check)', opinion: 'var(--opinion)', neutral: 'var(--neutral)' };
+  const COLORS = { ok: 'var(--ok)', likely: 'var(--likely)', bad: 'var(--bad)', risk: 'var(--risk)', check: 'var(--check)', opinion: 'var(--opinion)', neutral: 'var(--neutral)' };
   const LEVEL = {
     high: ['Можно доверять, но выборочно', 'Ключевые факты подтверждены. Перед использованием проверь пункты с жёлтой меткой.'],
+    clean: ['Ошибок не нашли', 'Ни одно утверждение не противоречит источникам, признаков выдумки нет. Жёлтые пункты мы не смогли подтвердить сами: это не значит, что они неверны. Для доклада сверь их с источниками ниже.'],
     mid: ['Доверяй осторожно', 'Часть утверждений не подтверждена или похожа на выдумку. Используй только проверенные пункты.'],
     low: ['Не доверяй без проверки', 'В ответе есть ошибки или сильные признаки выдумки. Не копируй его в работу как есть.'],
     none: ['Нечего проверять', 'В тексте нет фактических утверждений: только мнения и общие фразы.'],
@@ -1143,8 +1177,8 @@ if (typeof module !== 'undefined') module.exports = EXAMPLES; if (typeof module 
     const { value, counts, level } = res.score;
     const total = res.claims.length;
     const C = 2 * Math.PI * 54, ring = value == null ? 0 : C * value / 100;
-    const gcol = level === 'high' ? 'var(--ok)' : level === 'mid' ? 'var(--risk)' : level === 'low' ? 'var(--bad)' : 'var(--neutral)';
-    const order = ['ok', 'check', 'risk', 'bad', 'opinion', 'neutral'];
+    const gcol = level === 'high' || level === 'clean' ? 'var(--ok)' : level === 'mid' ? 'var(--risk)' : level === 'low' ? 'var(--bad)' : 'var(--neutral)';
+    const order = ['ok', 'likely', 'check', 'risk', 'bad', 'opinion', 'neutral'];
     const busy = state.busy ? `<p class="note"><span class="spin"></span> Сверяем числа и даты с Википедией…</p>` : '';
 
     let marked = '', pos = 0;
@@ -1155,7 +1189,7 @@ if (typeof module !== 'undefined') module.exports = EXAMPLES; if (typeof module 
     }
     marked += esc(state.text.slice(pos));
 
-    const F = { all: ['Все', () => true], problems: ['Ошибки и риски', c => ['bad', 'risk'].includes(c.verdict)], check: ['Проверить', c => c.verdict === 'check'], ok: ['Верно', c => c.verdict === 'ok'] };
+    const F = { all: ['Все', () => true], problems: ['Ошибки и риски', c => ['bad', 'risk'].includes(c.verdict)], check: ['Проверить', c => c.verdict === 'check'], ok: ['Верно', c => ['ok', 'likely'].includes(c.verdict)] };
     const shown = res.claims.filter(F[state.filter][1]);
 
     el.innerHTML = `
