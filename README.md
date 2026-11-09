@@ -1,68 +1,70 @@
 # TrustLens
 
-**Сайт:** https://yarmolenko08diana.github.io/TRUSTLENS-WIT-TEENS/
+**Live site:** https://yarmolenko08diana.github.io/TRUSTLENS-WIT-TEENS/
 
-Лупа доверия к ответам ИИ. Проект команды для кейса «AI Trust: можно ли доверять ответу ИИ?» на WIT Teens Hackathon.
+A magnifying glass for AI answers: find out which claims in a ChatGPT, Gemini, or other AI response you can trust.
 
-TrustLens помогает понять, каким утверждениям в ответе ChatGPT, Gemini или другого ИИ можно верить. Сервис делит ответ на отдельные утверждения, отмечает каждое цветом, объясняет простыми словами, почему оно так отмечено, и подсказывает, где проверить самому.
+Built by team luiqi for the “AI Trust: Can You Trust an AI Answer?” case at the WIT Teens Hackathon.
+```markdown
 
-## Что умеет
+## Features
 
-- **Разметка ответа.** У каждого утверждения есть метка: подтверждено, ошибка, похоже на выдумку, проверь сам, мнение или совет.
-- **Объяснение.** Для каждой фразы видно, что не так, как правильно и по каким признакам это заметно.
-- **Надёжные источники.** Сервис определяет тему утверждения (космос, здоровье, история, Казахстан и ещё 8) и даёт ссылки на ВОЗ, NASA, Britannica, stat.gov.kz, adilet.zan.kz и другие проверенные сайты.
-- **Список источников для доклада.** Источники, по которым проверены факты, собираются в готовый список литературы.
-- **Оценка ссылок.** Ссылки из ответа ИИ помечаются как официальный сайт, СМИ, соцсеть или блог, неизвестный сайт.
-- **Индекс доверия** от 0 до 100 и готовый запрос «перепроверь себя» для того же чата с ИИ.
-- **Тренажёр.** 14 раундов по разным темам: в каждой игре 6 случайных, можно пройти и все сразу.
-- **Примеры и свой текст.** 9 готовых примеров и кнопка «Проверить свой текст», которая очищает поле.
-- **Каталог источников** и пять вопросов, по которым можно оценить любой сайт.
-- История проверок, тёмная тема, версия для телефона.
+- **Answer labeling.** Each claim gets a label: confirmed, error, looks fabricated, verify yourself, or opinion/advice.
+- **Explanations.** For each statement, the tool shows what's wrong, what's correct, and the signs that reveal the problem.
+- **Trusted sources.** The service detects the topic of a claim (space, health, history, Kazakhstan, and 8 more) and links to verified sites such as WHO, NASA, Britannica, stat.gov.kz, and adilet.zan.kz.
+- **Source list for reports.** Sources used to check facts are compiled into a ready-made reference list.
+- **Link assessment.** Links in an AI response are tagged as official site, media, social network, blog, or unknown site.
+- **Trust index** from 0 to 100, plus a ready-made "double-check yourself" prompt for the same AI chat.
+- **Trainer.** 14 rounds across different topics. Each game has 6 random claims, or users can play all of them.
+- **Examples and custom text.** 9 ready-made examples and a "Check my text" button that clears the input field.
+- **Source catalog** and five questions for evaluating any website.
+- Check history, dark theme, and a mobile version.
 
-## Как устроена проверка
+## How the Check Works
 
-1. Ответ делится на утверждения (`src/engine.js`, раздел «Splitting»).
-2. Для каждого утверждения определяется тип: факт, число, цитата, ссылка на исследование, мнение.
-3. Ищутся 10 признаков выдумки: исследование без ссылки, слишком точная цифра, DOI, процент больше 100, цитата знаменитости, дата из будущего, противоречие внутри ответа, категоричность, устаревшие данные, высокая цена ошибки.
-4. Утверждение сверяется с базой из 72 проверенных фактов и пересчитываются вычисления. Википедия используется только как подсказка: совпадение даёт метку «Совпадает с Википедией», а отсутствие чисел в статье никогда не считается ошибкой.
-5. Сервис ставит метку, пишет объяснение и считает индекс доверия.
+1. The response is split into individual claims (`src/engine.js`, "Splitting" section).
+2. Each claim is classified as a fact, number, quote, research reference, or opinion.
+3. The engine looks for 10 signs of fabrication: research with no citation, overly precise figures, DOIs, percentages above 100, celebrity quotes, future dates, internal contradictions, absolute language, outdated data, and high cost of error.
+4. Each claim is checked against a base of 72 verified facts, and calculations are recomputed. Wikipedia is used only as a hint. A match yields a "Matches Wikipedia" label, and a missing number in an article is never treated as an error.
+5. The service assigns a label, writes an explanation, and calculates the trust index.
 
-Надёжные источники по темам и оценка ссылок находятся в `src/sources.js`.
+Trusted sources by topic and link assessment logic live in `src/sources.js`.
 
-## Структура
+## Project Structure
 
 ```
-index.html        готовый сайт одним файлом
-src/app.html      разметка и стили
-src/app.js        интерфейс: отчёт, тренажёр, каталог, история
-src/engine.js     движок проверки
-src/sources.js    каталог надёжных источников и оценка ссылок
-src/examples.js   примеры и раунды тренажёра
-build.py          собирает index.html из файлов src/
-tests/accuracy.js проверка точности: правдивые тексты без ложных тревог, раунды тренажёра
+index.html        ready-made site in one file
+src/app.html      markup and styles
+src/app.js        interface: report, trainer, catalog, history
+src/engine.js     checking engine
+src/sources.js    trusted source catalog and link assessment
+src/examples.js   examples and trainer rounds
+build.py          builds index.html from src/ files
+tests/accuracy.js accuracy tests: truthful texts without false alarms, trainer rounds
 ```
 
-Проверка точности: `node tests/accuracy.js`. Сейчас 8 правдивых текстов (в том числе о гибели принцессы Дианы на русском и английском) проходят без ложных тревог, а в тренажёре движок верно оценивает 55 из 56 утверждений.
+Accuracy check: `node tests/accuracy.js`. Currently, 8 truthful texts (including ones about Princess Diana's death in Russian and English) pass without false alarms, and in the trainer the engine correctly judges 55 of 56 claims.
 
-После изменений в `src/` запустите `python3 build.py`. Для сборки нужны Python 3 и Node.js.
+After changing files in `src/`, run `python3 build.py`. Building requires Python 3 and Node.js.
 
-## Инструменты разработки
+## Development Tools
 
-| Инструмент | Зачем использовали |
+| Tool | Purpose |
 | --- | --- |
-| Claude (Anthropic), режим Claude Code | ИИ-ассистент для программирования: помогал писать код движка и интерфейса, искать ошибки, подбирать примеры и раунды тренажёра. Задачи ставила и результат проверяла команда. |
-| HTML, CSS, JavaScript | Сам сайт, без фреймворков и сервера. |
-| Регулярные выражения и правила | Движок проверки работает без ИИ, каждое решение объясняется правилом в коде. |
-| Python, Node.js | Сборка `index.html` (`build.py`) и тесты точности (`tests/accuracy.js`). |
-| Playwright + Chromium | Проверка сайта в браузере перед публикацией. |
-| Git, GitHub | Код и история изменений. |
-| Wikipedia API | Подсказка при проверке чисел и дат. |
+| Claude (Anthropic), Claude Code mode | AI coding assistant: helped write the engine and interface code, find bugs, and select examples and trainer rounds. The team set the tasks and verified the results. |
+| HTML, CSS, JavaScript | The site itself, with no frameworks or server. |
+| Regular expressions and rules | The checking engine works without AI, and every decision is explained by a rule in the code. |
+| Python, Node.js | Building `index.html` (`build.py`) and accuracy tests (`tests/accuracy.js`). |
+| Playwright + Chromium | Testing the site in a browser before publishing. |
+| Git, GitHub | Code and change history. |
+| Wikipedia API | Hints when checking numbers and dates. |
 
-## Роли команды
+## Team Roles
 
-Команда: **luiqi**
+Team: **luiqi**
 
-| Участник | Роль | Зона ответственности |
+| Member | Role | Responsibilities |
 | --- | --- | --- |
-| Ярмоленко Диана Дмитриевна | Lead Fullstack & AI Engineer | Бекенд, логика и ИИ |
-| Молдагали Жасмина Мейрманкызы | Frontend & UI/UX Developer | Фронтенд, интерфейс и питч |
+| Yarmolenko Diana Dmitrievna | Lead Fullstack & AI Engineer | Backend, logic, and AI |
+| Moldagali Zhasmina Meirmankyzy | Frontend & UI/UX Developer | Frontend, interface, and pitch |
+```
