@@ -5,7 +5,7 @@
 A magnifying glass for AI answers: find out which claims in a ChatGPT, Gemini, or other AI response you can trust.
 
 Built by team luiqi for the “AI Trust: Can You Trust an AI Answer?” case at the WIT Teens Hackathon.
-```markdown
+
 
 ## Features
 
